@@ -119,7 +119,6 @@ public class Player {
          }
 
          x += dx * delta;
-         y += dy * delta;
 
          if (x < 0) {
              x = 0;
@@ -128,17 +127,28 @@ public class Player {
              x = 1280 - WIDTH;
          }
 
-         if (y + HEIGHT > 600) {
-              y = 600 - HEIGHT;
-              dy = 0;
-              grounded = true;
-              jumping = false;
-         } else {
-             grounded = false;
+         y += dy * delta;
+
+         grounded = false;
+
+         for (Platform plat : platforms) {
+             double px = plat.getX();
+             double py = plat.getY();
+             double pw = plat.getWidth();
+             double ph = plat.getHeight();
+
+             if (x + WIDTH > px && x < px + pw) {
+                 if (dy >= 0 && y + HEIGHT >= py && y + HEIGHT <= py + ph + 10) {
+                     y = py - HEIGHT;
+                     dy = 0;
+                     grounded = true;
+                     jumping = false;
+                 }
+             }
          }
 
          entity.setScaleX(facing);
-         entity.setPosition(x, y);
+         entity,setPosition(x, y);
          updateGun();
      }
 

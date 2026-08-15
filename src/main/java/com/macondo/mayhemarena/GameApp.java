@@ -4,6 +4,7 @@ import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.dsl.FXGL;
 import com.macondo.mayhemarena.entity.Player;
+import com.macondo.mayhemarena.map.MapLoader;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -14,6 +15,7 @@ import java.util.Set;
 public class GameApp extends GameApplication{
 
     private Player player;
+    private MapLoader mapLoader;
     private Set<KeyCode> pressedKeys;
 
     public GameApp() {
@@ -34,6 +36,8 @@ public class GameApp extends GameApplication{
     @Override
     protected void initGame() {
         player = new Player();
+        mapLoader = new MapLoader();
+        mapLoader.loadMap("Sky Ruins");
         setupInput();
     }
 
