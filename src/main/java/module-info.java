@@ -11,4 +11,5 @@ module com.macondo.mayhemarena {
     exports com.macondo.mayhemarena.config;
     exports com.macondo.mayhemarena.entity;
     exports com.macondo.mayhemarena.map;
+    exports com.macondo.meyhemarena.weapon;
 }
