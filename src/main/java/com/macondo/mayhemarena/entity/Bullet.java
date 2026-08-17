@@ -16,6 +16,7 @@ public class Bullet {
     private int range;
     private double distanceTraveled;
     private boolean active;
+    private int shooterId;
 
     public Bullet(double startX, double startY, int facing, int damage, int knockback, int range) {
         this.x = startX + (facing == 1 ? 20 : -20);
@@ -27,6 +28,7 @@ public class Bullet {
         this.range = range;
         this.distanceTraveled = 0;
         this.active = true;
+        this.shooterId = shooterId;
 
         Rectangle shape = new Rectangle(12, 6);
         shape.setFill(Color.YELLOW);
@@ -60,12 +62,30 @@ public class Bullet {
         }
     }
 
+    public boolean hitsPlayer(Player player) {
+        if (player.getPlayerId() == shooterId) {
+            return false;
+        }
+
+        if (player.isKnockedOut()) {
+            return false;
+        }
+
+        double px = player.getX();
+        double py = player.getY();
+        double pw = Player.WIDTH;
+        double ph = Player.HEIGHT;
+
+        return x > px && x < px + pw && y > py && y < py + ph;
+    }
+
     public double getX() { return x; }
     public double getY() { return y; }
     public int getDamage() { return damage; }
     public int getKnockback() { return knockback; }
     public boolean isActive() { return active; }
     public Entity getEntity() { return entity; }
+    public int getShooterId() { return shooterId; }
 
     public void deactivate() {
         active = false;

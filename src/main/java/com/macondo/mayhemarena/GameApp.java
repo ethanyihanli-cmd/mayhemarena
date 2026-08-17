@@ -100,7 +100,7 @@ public class GameApp extends GameApplication{
         double y = player.getY();
         int facing = player.getFacing();
 
-        List<Bullet> newBullets = weapon.shoot(x, y, facing);
+        List<Bullet> newBullets = weapon.shoot(x, y, facing, getPlayerId());
         bullets.addAll(newBullets);
     }
 
@@ -117,8 +117,26 @@ public class GameApp extends GameApplication{
          List<Bullet> toRemove = new ArrayList<>();
          for (Bullet b : bullets) {
              b.update(delta);
+
              if (!b.isActive()) {
                  toRemove.add(b);
+                 continue;
+             }
+
+             if (b.hitsPlayer(player1)) {
+                 player1.takeDamage(b.getDamage());
+                 player1.applyKnockback(b.getKnockback(), b.getX() > player1.getX() ? 1 : -1);
+                 b.deactivate();
+                 toRemove.add(b);
+                 continue;
+             }
+
+             if (b.hitsPlayer(player2)) {
+                 player2.takeDamage(b.getDamage());
+                 player2.applyKnockback(b.getKnockback(), b.getX() > player2.getX() ? 1 : -1);
+                 b.deactivate();
+                 toRemove.add(b);
+                 continue;
              }
          }
 
@@ -161,6 +179,9 @@ public class GameApp extends GameApplication{
      }
 
      private void updateTitle() {
+        String p1Health = "HP: " + player1.getHealth() + "/" + player1.getMaxHealth();
+        String p2Health = "HP: " + player2.getHealth() + "/" + player2.getMaxHealth();
+
         String p1Ammo = weapon1.getMagazine() + "/" + weapon1.getMaxMagazine() +
                 " | " + weapon1.getCurrentAmmo() + "/" + weapon1.getMaxAmmo();
         String p2Ammo = weapon2.getMagazine() + "/" + weapon2.getMaxMagazine() +

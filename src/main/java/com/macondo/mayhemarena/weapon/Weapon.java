@@ -22,7 +22,7 @@ public class Weapon {
         this.shootCooldown = 0;
     }
 
-    public List<Bullet> shoot(double x, double y, int facing) {
+    public List<Bullet> shoot(double x, double y, int facing, int shooterId) {
         List<Bullet> bullets = new ArrayList<>();
 
         if (isReloading || magazine <= 0 || shootCooldown > 0) {
@@ -45,7 +45,6 @@ public class Weapon {
                     spread += (Math.random() - 0.5) * 0.05;
                 }
 
-                double angle = spread;
                 int adjustedKnockback = type.getKnockback();
 
                 if (type == WeaponType.SHOTGUN) {
@@ -53,7 +52,7 @@ public class Weapon {
                 }
 
                 Bullet bullet = new Bullet(x, y, facing, type.getDamage(),
-                        adjustedKnockback, type.getRange());
+                        adjustedKnockback, type.getRange(), shooterId);
                 bullets.add(bullet);
             }
 

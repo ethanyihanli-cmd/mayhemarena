@@ -5,6 +5,8 @@ import com.almasb.fxgl.entity.Entity;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
+import java.util.List;
+
 public class Player {
     public static final int WIDTH = 34;
     public static final int HEIGHT = 58;
@@ -18,6 +20,10 @@ public class Player {
     private boolean grounded;
     private boolean jumping;
     private int facing;
+
+    private int health;
+    private int maxHealth;
+    private boolean knockedOut;
 
     private Entity entity;
     private Rectangle body;
@@ -34,6 +40,10 @@ public class Player {
         grounded = false;
         jumping = false;
         facing = 1;
+
+        health = 100;
+        maxHealth = 100;
+        knockedOut = false;
 
         createEntity();
         FXGL.getGameWorld().addEntity(entity);
@@ -124,7 +134,53 @@ public class Player {
          }
      }
 
-     public void update(double delta) {
+     public void takeDamage(int amount) {
+        if (knockedOut) {
+            return;
+        }
+
+        health -= amount;
+        if (health <= 0) {
+            health = 0;
+            knockedOut = true;
+            body.setFill(Color.DARKRED);
+            System.out.println("Player " + playerId + " is knocked out!");
+        }
+     }
+
+     public void applyKnockback(int force, int direction) {
+        if (knockedOut) {
+            return;
+        }
+
+        dx += direction * force * 0.5;
+        dy = -100;
+
+        if (dx > 800) dx = 800;
+        if (dx < -800) dx = -800;
+     }
+
+     public void reset() {
+        health = maxHealth;
+        knockedOut = false;
+        dx = 0;
+        dy = 0;
+
+        if (playerId == 1) {
+            body.setFill(Color.GREEN);
+        } else {
+            body.setFill(Color.RED);
+        }
+
+        x = (playerId == 1) ? 500 : 780;
+        y = 360;
+     }
+
+     public void update(double delta, List<Platform> platforms) {
+        if (knockedOut) {
+            return;
+        }
+
          dy += 1900 * delta;
          if (dy > 1200) {
              dy = 1200;
@@ -160,7 +216,7 @@ public class Player {
          }
 
          entity.setScaleX(facing);
-         entity,setPosition(x, y);
+         entity.setPosition(x, y);
          updateGun();
      }
 
@@ -182,5 +238,14 @@ public class Player {
      }
      public Entity getEntity() {
         return entity;
+     }
+     public int getHealth() {
+        return health;
+     }
+     public int getMaxHealth() {
+        return maxHealth;
+     }
+     public boolean isKnockedOut() {
+        return knockedOut;
      }
 }
