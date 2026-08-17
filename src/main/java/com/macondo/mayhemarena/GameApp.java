@@ -6,6 +6,7 @@ import com.almasb.fxgl.dsl.FXGL;
 import com.macondo.mayhemarena.entity.Bullet;
 import com.macondo.mayhemarena.entity.Player;
 import com.macondo.mayhemarena.map.MapLoader;
+import com.macondo.mayhemarena.ui.WeaponSelection;
 import com.macondo.mayhemarena.weapon.Weapon;
 import com.macondo.mayhemarena.weapon.WeaponType;
 import javafx.scene.Scene;
@@ -27,9 +28,14 @@ public class GameApp extends GameApplication{
     private List<Bullet> bullets;
     private Set<KeyCode> pressedKeys;
 
+    private WeaponType p1Weapon;
+    private WeaponType p2Weapon;
+    private boolean matchStarted;
+
     public GameApp() {
         pressedKeys = new HashSet<>();
         bullets = new ArrayList<>();
+        matchStarted = false;
     }
 
     @Override
@@ -45,16 +51,31 @@ public class GameApp extends GameApplication{
 
     @Override
     protected void initGame() {
+        WeaponSelection selection = new WeaponSelection();
+        WeaponType[] selected = selection.showAndWait();
+
+        if (selected == null) {
+            p1Weapon = WeaponType.PISTOL;
+            p2Weapon = WeaponType.PISTOL;
+        } else {
+            p1Weapon = selected[0];
+            p2Weapon = selected[1];
+        }
+
         mapLoader = new MapLoader();
         mapLoader.loadMap("Sky Ruins");
 
         player1 = new Player(1, 500, 360);
         player2 = new Player(2, 780, 360);
 
-        weapon1 = new Weapon(WeaponType.PISTOL);
-        weapon2 = new Weapon(WeaponType.PISTOL);
+        weapon1 = new Weapon(p1Weapon);
+        weapon2 = new Weapon(p2Weapon);
 
+        matchStarted = true;
         setupInput();
+
+        System.out.println("Player 1: " + p1Weapon.getName());
+        System.out.println("Player 2: " + p2Weapon.getName());
     }
 
     private void setupInput() {
@@ -72,7 +93,6 @@ public class GameApp extends GameApplication{
             if (e.getCode() == KeyCode.R) {
                 weapon1.reload();
             }
-
             if (e.getCode() == KeyCode.COMMA) {
                 weapon2.reload();
             }
@@ -106,6 +126,10 @@ public class GameApp extends GameApplication{
 
     @Override
     protected void onUpdate(double delta) {
+        if (!matchStarted) {
+            return;
+        }
+
          handleInput(delta);
 
          player1.update(delta, mapLoader.getPlatforms());
@@ -142,7 +166,17 @@ public class GameApp extends GameApplication{
 
          bullets.removeAll(toRemove);
 
+         checkMatchEnd();
+
          updateTitle();
+    }
+
+    private void checkMatchEnd() {
+        if (player1.isKnockedOut()) {
+            System.out.println("PLAYER 2 WINS!");
+        } else if (player2.isKnockedOut()) {
+            System.out.println("PLAYER 1 WINS!");
+        }
     }
 
      private void handleInput(double delta) {
@@ -187,7 +221,8 @@ public class GameApp extends GameApplication{
         String p2Ammo = weapon2.getMagazine() + "/" + weapon2.getMaxMagazine() +
                 " | " + weapon2.getCurrentAmmo() + "/" + weapon2.getMaxAmmo();
 
-        FXGL.getSettings().setTitle("P1: " + p1Ammo + " | P2: " + p2Ammo);
+        FXGL.getSettings().setTitle("P1: " + p1Health + " " + p1Ammo +
+                " | P2: " + p2Health + " " + p2Ammo);
     }
 
     public static void main(String[] args) {
