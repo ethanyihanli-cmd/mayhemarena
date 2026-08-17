@@ -7,13 +7,16 @@ import java.util.List;
 
 public class MapLoader {
     private List<Platform> platforms;
+    private String currentMap;
 
     public class MapLoader {
         platforms = new ArrayList<>();
+        currentMap = "Sky Ruins";
     }
 
     public void loadMap(String mapName) {
         platforms.clear();
+        currentMap = mapName;
 
         platforms.add(new Platform(0, 600, 1280, 120));
 
@@ -26,6 +29,9 @@ public class MapLoader {
                 break;
             case "Twin Pits":
                 loadTwinPits();
+                break;
+            case "Crystal Cavern":
+                loadCrystalCavern();
                 break;
             default:
                 loadSkyRuins();
@@ -51,6 +57,8 @@ public class MapLoader {
 
         platforms.add(new Platform(200, 420, 120, 20));
         platforms.add(new Platform(960, 420, 120, 20));
+        platforms.add(new Platform(350, 350, 100, 20));
+        platforms.add(new Platform(830, 350, 100, 20));
     }
 
     private void loadTwinPits() {
@@ -64,6 +72,21 @@ public class MapLoader {
         platforms.add(new Platform(140, 430, 120, 20));
         platforms.add(new Platform(600, 440, 100, 20));
         platforms.add(new Platform(1020, 430, 120, 20));
+        platforms.add(new Platform(300, 340, 80, 20));
+        platforms.add(new Platform(900, 340, 80, 20));
+    }
+
+    private void loadCrystalCavern() {
+        platforms.add(new Platform(0, 570, 350, 20));
+        platforms.add(new Platform(930, 570, 350, 20));
+        platforms.add(new Platform(600, 540, 80, 20));
+        platforms.add(new Platform(150, 480, 120, 20));
+        platforms.add(new Platform(1010, 480, 120, 20));
+        platforms.add(new Platform(350, 430, 100, 20));
+        platforms.add(new Platform(830, 430, 100, 20));
+        platforms.add(new Platform(600, 380, 80, 20));
+        platforms.add(new Platform(250, 330, 80, 20));
+        platforms.add(new Platform(950, 330, 80, 20));
     }
 
     public List<Platform> getPlatforms() {
@@ -73,5 +96,14 @@ public class MapLoader {
     public Platform getGround() {
         return platforms.isEmpty() ? null : platforms.get(0);
     }
+
+    public String getCurrentMap() {
+        return currentMap;
+    }
+
+    public String[] getMapNames() {
+        return new String[]{"Sky Ruins", "Split Foundry", "Twin Pits", "Crystal Cavern"};
+    }
+
 
 }

@@ -30,12 +30,14 @@ public class GameApp extends GameApplication{
 
     private WeaponType p1Weapon;
     private WeaponType p2Weapon;
+    private String selectedMap;
     private boolean matchStarted;
 
     public GameApp() {
         pressedKeys = new HashSet<>();
         bullets = new ArrayList<>();
         matchStarted = false;
+        selectedMap = "Sky Ruins";
     }
 
     @Override
@@ -51,6 +53,12 @@ public class GameApp extends GameApplication{
 
     @Override
     protected void initGame() {
+        MapSelection mapSelection = new MapSelection();
+        String map = mapSelection.showAndWait();
+        if (map != null) {
+            selectedMap = map;
+        }
+
         WeaponSelection selection = new WeaponSelection();
         WeaponType[] selected = selection.showAndWait();
 
@@ -63,7 +71,7 @@ public class GameApp extends GameApplication{
         }
 
         mapLoader = new MapLoader();
-        mapLoader.loadMap("Sky Ruins");
+        mapLoader.loadMap(selectedMap);
 
         player1 = new Player(1, 500, 360);
         player2 = new Player(2, 780, 360);
@@ -74,6 +82,7 @@ public class GameApp extends GameApplication{
         matchStarted = true;
         setupInput();
 
+        System.out.println("Map: " + selectedMap);
         System.out.println("Player 1: " + p1Weapon.getName());
         System.out.println("Player 2: " + p2Weapon.getName());
     }
@@ -111,7 +120,7 @@ public class GameApp extends GameApplication{
         });
     }
 
-    private void shoot() {
+    private void shoot(Player player, Weapon weapon) {
         if (!weapon.canShoot()) {
             return;
         }
@@ -120,7 +129,7 @@ public class GameApp extends GameApplication{
         double y = player.getY();
         int facing = player.getFacing();
 
-        List<Bullet> newBullets = weapon.shoot(x, y, facing, getPlayerId());
+        List<Bullet> newBullets = weapon.shoot(x, y, facing, player.getPlayerId());
         bullets.addAll(newBullets);
     }
 
@@ -174,8 +183,10 @@ public class GameApp extends GameApplication{
     private void checkMatchEnd() {
         if (player1.isKnockedOut()) {
             System.out.println("PLAYER 2 WINS!");
+            matchStarted = false;
         } else if (player2.isKnockedOut()) {
             System.out.println("PLAYER 1 WINS!");
+            matchStarted = false;
         }
     }
 
@@ -221,7 +232,7 @@ public class GameApp extends GameApplication{
         String p2Ammo = weapon2.getMagazine() + "/" + weapon2.getMaxMagazine() +
                 " | " + weapon2.getCurrentAmmo() + "/" + weapon2.getMaxAmmo();
 
-        FXGL.getSettings().setTitle("P1: " + p1Health + " " + p1Ammo +
+        FXGL.getSettings().setTitle(selectedMap + " | P1: " + p1Health + " " + p1Ammo +
                 " | P2: " + p2Health + " " + p2Ammo);
     }
 
