@@ -6,10 +6,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 public class Player {
-
     public static final int WIDTH = 34;
     public static final int HEIGHT = 58;
 
+    private int playerId;
     private double x;
     private double y;
     private double dx;
@@ -25,9 +25,10 @@ public class Player {
     private Rectangle visor;
     private Rectangle gun;
 
-    public Player() {
-        x = 640;
-        y = 360;
+    public Player(int playerId, double startX, double startY) {
+        this.playerId = playerId;
+        this.x = startX;
+        this.y = startY;
         dx = 0;
         dy = 0;
         grounded = false;
@@ -42,7 +43,13 @@ public class Player {
         body = new Rectangle(WIDTH,HEIGHT - 10);
         body.setArcWidth(8);
         body.setArcHeight(8);
-        body.setFill(Color.GREEN);
+
+        if (playerId == 1) {
+            body.setFill(Color.GREEN);
+        } else {
+            body.setFill(Color.RED);
+        }
+
         body.setStroke(Color.BLACK);
         body.setStrokeWidth(2);
 
@@ -51,7 +58,12 @@ public class Player {
         hat.setTranslateY(-12);
         hat.setArcWidth(6);
         hat.setArcHeight(6);
-        hat.setFill(Color.DARKBLUE);
+
+        if (playerId == 1) {
+            hat.setFill(Color.DARKBLUE);
+        } else {
+            hat.setFill(Color.DARKRED);
+        }
 
         visor = new Rectangle(10,6);
         visor.setTranslateX(WIDTH / 2 - 5);
@@ -152,6 +164,10 @@ public class Player {
          updateGun();
      }
 
+     public int getPlayerId() {
+        return playerId;
+     }
+
      public double getX() {
         return x;
      }
@@ -161,7 +177,7 @@ public class Player {
      public int getFacing() {
         return facing;
      }
-     public boolean isOnGround() {
+     public boolean isGrounded() {
         return grounded;
      }
      public Entity getEntity() {

@@ -19,9 +19,11 @@ import java.util.Set;
 
 public class GameApp extends GameApplication{
 
-    private Player player;
+    private Player player1;
+    private Player player2;
     private MapLoader mapLoader;
-    private Weapon weapon;
+    private Weapon weapon1;
+    private Weapon weapon2;
     private List<Bullet> bullets;
     private Set<KeyCode> pressedKeys;
 
@@ -43,10 +45,15 @@ public class GameApp extends GameApplication{
 
     @Override
     protected void initGame() {
-        player = new Player();
         mapLoader = new MapLoader();
         mapLoader.loadMap("Sky Ruins");
-        weapon = new Weapon(WeaponType.PISTOL);
+
+        player1 = new Player(1, 500, 360);
+        player2 = new Player(2, 780, 360);
+
+        weapon1 = new Weapon(WeaponType.PISTOL);
+        weapon2 = new Weapon(WeaponType.PISTOL);
+
         setupInput();
     }
 
@@ -57,17 +64,29 @@ public class GameApp extends GameApplication{
             pressedKeys.add(e.getCode());
 
             if (e.getCode() == KeyCode.SPACE) {
-                shoot();
+                shoot(player1, weapon1);
+            }
+            if (e.getCode() == KeyCode.M) {
+                shoot(player2, weapon2);
             }
             if (e.getCode() == KeyCode.R) {
-                weapon.reload();
+                weapon1.reload();
+            }
+
+            if (e.getCode() == KeyCode.COMMA) {
+                weapon2.reload();
             }
         });
 
         scene.addEventFilter(KeyEvent.KEY_RELEASED, e -> {
              pressedKeys.remove(e.getCode());
-             if (e.getCode() == KeyCode.W || e.getCode() == KeyCode.UP) {
-                  player.releaseJump();
+
+             if (e.getCode() == KeyCode.W) {
+                  player1.releaseJump();
+             }
+
+             if (e.getCode() == KeyCode.UP) {
+                 player2.releaseJump();
              }
         });
     }
@@ -89,9 +108,11 @@ public class GameApp extends GameApplication{
     protected void onUpdate(double delta) {
          handleInput(delta);
 
-         player.update(delta, mapLoader.getPlatforms());
+         player1.update(delta, mapLoader.getPlatforms());
+         player2.update(delta, mapLoader.getPlatforms());
 
-         weapon.update(delta);
+         weapon1.update(delta);
+         weapon2.update(delta);
 
          List<Bullet> toRemove = new ArrayList<>();
          for (Bullet b : bullets) {
@@ -107,31 +128,49 @@ public class GameApp extends GameApplication{
     }
 
      private void handleInput(double delta) {
-         boolean left = pressedKeys.contains(KeyCode.A) || pressedKeys.contains(KeyCode.LEFT);
-         boolean right = pressedKeys.contains(KeyCode.D) || pressedKeys.contains(KeyCode.RIGHT);
+         boolean p1left = pressedKeys.contains(KeyCode.A);
+         boolean p1right = pressedKeys.contains(KeyCode.D);
 
-         if (left && !right) {
-             player.moveLeft(delta);
-         } else if (right && !left) {
-             player.moveRight(delta);
+         if (p1left && !p1right) {
+             player1.moveLeft(delta);
+         } else if (p1right && !p1left) {
+             player1.moveRight(delta);
          } else {
-             player.stopMoving();
+             player1.stopMoving();
          }
 
-         if (pressedKeys.contains(KeyCode.W) || pressedKeys.contains(KeyCode.UP)) {
-             player.jump();
+         if (pressedKeys.contains(KeyCode.W) {
+             player1.jump();
          }
+
+         boolean p2Left = pressedKeys.contains(KeyCode.LEFT);
+         boolean p2Right = pressedKeys.contains(KeyCode.RIGHT);
+
+         if (p2Left && !p2Right) {
+             player2.moveLeft(delta);
+         } else if (p2Right && !p2Left) {
+             player2.moveRight(delta);
+         } else {
+             player2.stopMoving();
+         }
+
+         if (pressedKeys.contains(KeyCode.UP)) {
+             player2.jump();
+         }
+
      }
 
      private void updateTitle() {
-        String status = weapon.isReloading() ? " [RELOADING]" : "";
-        String ammo = weapon.getMagazine() + "/" + weapon.getMaxMagazine() +
-                " | " + weapon.getCurrentAmmo() + "/" + weapon.getMaxAmmo();
-        FXGL.getSettings().setTitle("MayhemArena - " + weapon.getType().getName() +
-                " " + ammo + status);
+        String p1Ammo = weapon1.getMagazine() + "/" + weapon1.getMaxMagazine() +
+                " | " + weapon1.getCurrentAmmo() + "/" + weapon1.getMaxAmmo();
+        String p2Ammo = weapon2.getMagazine() + "/" + weapon2.getMaxMagazine() +
+                " | " + weapon2.getCurrentAmmo() + "/" + weapon2.getMaxAmmo();
+
+        FXGL.getSettings().setTitle("P1: " + p1Ammo + " | P2: " + p2Ammo);
     }
 
     public static void main(String[] args) {
         launch(args);
-}}
+    }
+}
 
