@@ -9,7 +9,9 @@ import com.macondo.mayhemarena.map.MapLoader;
 import com.macondo.mayhemarena.match.MatchController;
 import com.macondo.mayhemarena.ui.HUD;
 import com.macondo.mayhemarena.ui.MapSelection;
+import com.macondo.mayhemarena.ui.MatchMessage;
 import com.macondo.mayhemarena.ui.WeaponSelection;
+import com.macondo.mayhemarena.util.SoundManager;
 import com.macondo.mayhemarena.weapon.Weapon;
 import com.macondo.mayhemarena.weapon.WeaponType;
 import javafx.scene.Scene;
@@ -34,6 +36,7 @@ public class GameApp extends GameApplication{
     private HUD hud;
     private MatchController matchController;
     private MatchMessage matchMessage;
+    private SoundManager sound;
 
     private WeaponType p1Weapon;
     private WeaponType p2Weapon;
@@ -46,6 +49,7 @@ public class GameApp extends GameApplication{
         matchStarted = false;
         selectedMap = "Sky Ruins";
         matchController = new MatchController();
+        sound = SoundManager.getInstance();
     }
 
     @Override
@@ -110,12 +114,14 @@ public class GameApp extends GameApplication{
                 String text = "PLAYER " + winner.getPlayerId() + " WINS ROUND!";
                 Color color = winner.getPlayerId() == 1 ? Color.LIME : Color.RED;
                 matchMessage.show(text, color);
+                sound.playWin();
             }
 
             @Override
             public void onMatchEnd(Player winner, int p1Wins, int p2Wins) {
                 String text = "PLAYER" + winner.getPlayerId() + " WINS THE MATCH!";
                 matchMessage.show(text, Color.GOLD);
+                sound.playWin();
                 matchStarted = false;
             }
         });
@@ -129,12 +135,6 @@ public class GameApp extends GameApplication{
         System.out.println("Player 1: " + p1Weapon.getName());
         System.out.println("Player 2: " + p2Weapon.getName());
 
-        matchStarted = true;
-        setupInput();
-
-        System.out.println("Map: " + selectedMap);
-        System.out.println("Player 1: " + p1Weapon.getName());
-        System.out.println("Player 2: " + p2Weapon.getName());
     }
 
     private void resetPlayers() {
@@ -155,15 +155,19 @@ public class GameApp extends GameApplication{
 
             if (e.getCode() == KeyCode.SPACE && matchStarted && matchController.isRoundActive()) {
                 shoot(player1, weapon1);
+                sound.playShoot();
             }
             if (e.getCode() == KeyCode.M && matchStarted && matchController.isRoundActive()) {
                 shoot(player2, weapon2);
+                sound.playShoot();
             }
             if (e.getCode() == KeyCode.R && matchStarted && matchController.isRoundActive()) {
                 weapon1.reload();
+                sound.playReload();
             }
             if (e.getCode() == KeyCode.COMMA && matchStarted && matchController.isRoundActive()) {
                 weapon2.reload();
+                sound.playReload();
             }
         });
 
@@ -221,6 +225,7 @@ public class GameApp extends GameApplication{
                  player1.applyKnockback(b.getKnockback(), b.getX() > player1.getX() ? 1 : -1);
                  b.deactivate();
                  toRemove.add(b);
+                 sound.playHit();
                  continue;
              }
 
@@ -229,6 +234,7 @@ public class GameApp extends GameApplication{
                  player2.applyKnockback(b.getKnockback(), b.getX() > player2.getX() ? 1 : -1);
                  b.deactivate();
                  toRemove.add(b);
+                 sound.playHit();
                  continue;
              }
          }

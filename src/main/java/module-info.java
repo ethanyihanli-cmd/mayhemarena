@@ -14,4 +14,5 @@ module com.macondo.mayhemarena {
     exports com.macondo.mayhemarena.weapon;
     exports com.macondo.mayhemarena.ui;
     exports com.macondo.mayhemarena.match;
+    exports com.macondo.mayhemarena.util;
 }
