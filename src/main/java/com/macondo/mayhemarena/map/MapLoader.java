@@ -89,6 +89,21 @@ public class MapLoader {
         platforms.add(new Platform(950, 330, 80, 20));
     }
 
+    public double[] getSpawnPositions() {
+        switch (currentMap) {
+            case "Sky Ruins":
+                return new double[]{500, 360, 780, 360};
+            case "Split Foundry":
+                return new double[]{250, 400, 1030, 400};
+            case "Twin Pits":
+                return new double[]{175, 430, 625, 430};
+            case "Crystal Cavern":
+                return new double[]{300, 380, 980, 380};
+            default:
+                return new double[]{500, 360,780, 360};
+        }
+    }
+
     public List<Platform> getPlatforms() {
         return platforms;
     }

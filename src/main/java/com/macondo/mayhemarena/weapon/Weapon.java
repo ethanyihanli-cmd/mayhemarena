@@ -74,15 +74,22 @@ public class Weapon {
                 reloadTimer -= delta;
                 if (reloadTimer <= 0) {
                     isReloading = false;
-                    int needed = type.getMagazineSize() - magazine;
-                    int available = Math.min(needed, currentAmmo);
-                    magazine += available;
-                    currentAmmo -= available;
+                    if (type != WeaponType.KNIFE) {
+                        int needed = type.getMagazineSize() - magazine;
+                        int available = Math.min(needed, currentAmmo);
+                        magazine += available;
+                        currentAmmo -= available;
+                    } else {
+                        magazine = type.getMagazineSize();
+                    }
                 }
             }
         }
 
         public void reload() {
+            if (type == WeaponType.KNIFE) {
+                return;
+            }
             if (isReloading || magazine == type.getMagazineSize() || currentAmmo <= 0) {
                 return;
             }
@@ -91,6 +98,9 @@ public class Weapon {
         }
 
         public boolean canShoot() {
+            if (type == WeaponType.KNIFE) {
+                return !isReloading && shootCooldown <= 0;
+            }
             return !isReloading && magazine > 0 && shootCooldown <= 0;
         }
 

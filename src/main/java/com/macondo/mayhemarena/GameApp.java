@@ -135,16 +135,27 @@ public class GameApp extends GameApplication{
         System.out.println("Player 1: " + p1Weapon.getName());
         System.out.println("Player 2: " + p2Weapon.getName());
 
+
+        double[] spawns = mapLoader.getSpawnPositions();
+        player1 = new Player(1, spawns[0], spawns[1]);
+        player2 = new Player(2, spawns[2], spawns[3]);
+
     }
 
     private void resetPlayers() {
+        double[] spawns = mapLoader.getSpawnPositions();
         player1.reset();
         player2.reset();
-        player1.setPosition(500, 360);
-        player2.setPosition(780, 360);
+        player1.setPosition(spawns[0], spawns[1]);
+        player2.setPosition(spawns[2], spawns[3]);
 
         weapon1 = new Weapon(p1Weapon);
         weapon2 = new Weapon(p2Weapon);
+
+        for (Bullet b : bullets) {
+            b.deactivate();
+        }
+        bullets.clear();
     }
 
     private void setupInput() {
@@ -185,6 +196,9 @@ public class GameApp extends GameApplication{
     }
 
     private void shoot(Player player, Weapon weapon) {
+        if (!matchController.isRoundActive()) {
+            return;
+        }
         if (!weapon.canShoot()) {
             return;
         }

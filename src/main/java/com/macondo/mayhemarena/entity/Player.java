@@ -153,6 +153,7 @@ public class Player {
             return;
         }
 
+        double knockbackForce = grounded ? force * 0.3 : force * 0.5;
         dx += direction * force * 0.5;
         dy = -100;
 
