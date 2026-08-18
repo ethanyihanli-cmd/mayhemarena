@@ -6,6 +6,7 @@ import com.almasb.fxgl.dsl.FXGL;
 import com.macondo.mayhemarena.entity.Bullet;
 import com.macondo.mayhemarena.entity.Player;
 import com.macondo.mayhemarena.map.MapLoader;
+import com.macondo.mayhemarena.match.MatchController;
 import com.macondo.mayhemarena.ui.HUD;
 import com.macondo.mayhemarena.ui.MapSelection;
 import com.macondo.mayhemarena.ui.WeaponSelection;
@@ -14,6 +15,7 @@ import com.macondo.mayhemarena.weapon.WeaponType;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,6 +32,8 @@ public class GameApp extends GameApplication{
     private List<Bullet> bullets;
     private Set<KeyCode> pressedKeys;
     private HUD hud;
+    private MatchController matchController;
+    private MatchMessage matchMessage;
 
     private WeaponType p1Weapon;
     private WeaponType p2Weapon;
@@ -41,6 +45,7 @@ public class GameApp extends GameApplication{
         bullets = new ArrayList<>();
         matchStarted = false;
         selectedMap = "Sky Ruins";
+        matchController = new MatchController();
     }
 
     @Override
@@ -83,6 +88,46 @@ public class GameApp extends GameApplication{
         weapon2 = new Weapon(p2Weapon);
 
         hud = new HUD();
+        matchMessage = new MatchMessage();
+
+        FXGL.getPrimaryStage().getScene().setRoot(
+                new javafx.scene.layout.StackPane(
+                        FXGL.getPrimaryStage().getScene().getRoot(),
+                        matchMessage.getContainer()
+                )
+        );
+
+        matchController.setListener(new MatchController.MatchStateListener() {
+            @Override
+            public void onRoundStart(int roundNumber) {
+                matchMessage.show("ROUND" + roundNumber, Color.GOLD);
+                resetPlayers();
+                bullets.clear();
+            }
+
+            @Override
+            public void onRoundEnd(Player winner, int p1Wins, int p2Wins) {
+                String text = "PLAYER " + winner.getPlayerId() + " WINS ROUND!";
+                Color color = winner.getPlayerId() == 1 ? Color.LIME : Color.RED;
+                matchMessage.show(text, color);
+            }
+
+            @Override
+            public void onMatchEnd(Player winner, int p1Wins, int p2Wins) {
+                String text = "PLAYER" + winner.getPlayerId() + " WINS THE MATCH!";
+                matchMessage.show(text, Color.GOLD);
+                matchStarted = false;
+            }
+        });
+
+        matchStarted = true;
+        matchController.startMatch();
+
+        setupInput();
+
+        System.out.println("Map: " + selectedMap);
+        System.out.println("Player 1: " + p1Weapon.getName());
+        System.out.println("Player 2: " + p2Weapon.getName());
 
         matchStarted = true;
         setupInput();
@@ -92,22 +137,32 @@ public class GameApp extends GameApplication{
         System.out.println("Player 2: " + p2Weapon.getName());
     }
 
+    private void resetPlayers() {
+        player1.reset();
+        player2.reset();
+        player1.setPosition(500, 360);
+        player2.setPosition(780, 360);
+
+        weapon1 = new Weapon(p1Weapon);
+        weapon2 = new Weapon(p2Weapon);
+    }
+
     private void setupInput() {
         Scene scene = FXGL.getPrimaryStage().getScene();
 
         scene.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
             pressedKeys.add(e.getCode());
 
-            if (e.getCode() == KeyCode.SPACE && matchStarted) {
+            if (e.getCode() == KeyCode.SPACE && matchStarted && matchController.isRoundActive()) {
                 shoot(player1, weapon1);
             }
-            if (e.getCode() == KeyCode.M && matchStarted) {
+            if (e.getCode() == KeyCode.M && matchStarted && matchController.isRoundActive()) {
                 shoot(player2, weapon2);
             }
-            if (e.getCode() == KeyCode.R && matchStarted) {
+            if (e.getCode() == KeyCode.R && matchStarted && matchController.isRoundActive()) {
                 weapon1.reload();
             }
-            if (e.getCode() == KeyCode.COMMA && matchStarted) {
+            if (e.getCode() == KeyCode.COMMA && matchStarted && matchController.isRoundActive()) {
                 weapon2.reload();
             }
         });
@@ -182,18 +237,15 @@ public class GameApp extends GameApplication{
 
          hud.update(player1, player2, weapon1, weapon2);
 
-         checkMatchEnd();
-         updateTitle();
-    }
+         if (matchController.isRoundActive()) {
+             if(player1.isKnockedOut()) {
+                 matchController.endRound(player2);
+             } else if (player2.isKnockedOut()) {
+                 matchController.endRound(player1);
+             }
+         }
 
-    private void checkMatchEnd() {
-        if (player1.isKnockedOut()) {
-            System.out.println("PLAYER 2 WINS!");
-            matchStarted = false;
-        } else if (player2.isKnockedOut()) {
-            System.out.println("PLAYER 1 WINS!");
-            matchStarted = false;
-        }
+         updateTitle();
     }
 
      private void handleInput(double delta) {
@@ -230,16 +282,8 @@ public class GameApp extends GameApplication{
      }
 
      private void updateTitle() {
-        String p1Health = "HP: " + player1.getHealth() + "/" + player1.getMaxHealth();
-        String p2Health = "HP: " + player2.getHealth() + "/" + player2.getMaxHealth();
-
-        String p1Ammo = weapon1.getMagazine() + "/" + weapon1.getMaxMagazine() +
-                " | " + weapon1.getCurrentAmmo() + "/" + weapon1.getMaxAmmo();
-        String p2Ammo = weapon2.getMagazine() + "/" + weapon2.getMaxMagazine() +
-                " | " + weapon2.getCurrentAmmo() + "/" + weapon2.getMaxAmmo();
-
-        FXGL.getSettings().setTitle(selectedMap + " | P1: " + p1Health + " " + p1Ammo +
-                " | P2: " + p2Health + " " + p2Ammo);
+        FXGL.getSettings().setTitle(selectedMap + " | Round " + matchController.getRoundNumber() +
+                " | P1: " + matchController.getPlayer1Wins() + " - " + matchController.getPlayer2Wins() + " P2");
     }
 
     public static void main(String[] args) {

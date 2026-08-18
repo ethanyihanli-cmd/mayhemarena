@@ -220,6 +220,12 @@ public class Player {
          updateGun();
      }
 
+     public void setPosition(double newX, double newY) {
+        this.x = newX;
+        this.y = newY;
+        entity.setPosition(x, y);
+     }
+
      public int getPlayerId() {
         return playerId;
      }
