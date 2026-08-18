@@ -6,6 +6,8 @@ import com.almasb.fxgl.dsl.FXGL;
 import com.macondo.mayhemarena.entity.Bullet;
 import com.macondo.mayhemarena.entity.Player;
 import com.macondo.mayhemarena.map.MapLoader;
+import com.macondo.mayhemarena.ui.HUD;
+import com.macondo.mayhemarena.ui.MapSelection;
 import com.macondo.mayhemarena.ui.WeaponSelection;
 import com.macondo.mayhemarena.weapon.Weapon;
 import com.macondo.mayhemarena.weapon.WeaponType;
@@ -27,6 +29,7 @@ public class GameApp extends GameApplication{
     private Weapon weapon2;
     private List<Bullet> bullets;
     private Set<KeyCode> pressedKeys;
+    private HUD hud;
 
     private WeaponType p1Weapon;
     private WeaponType p2Weapon;
@@ -79,6 +82,8 @@ public class GameApp extends GameApplication{
         weapon1 = new Weapon(p1Weapon);
         weapon2 = new Weapon(p2Weapon);
 
+        hud = new HUD();
+
         matchStarted = true;
         setupInput();
 
@@ -93,16 +98,16 @@ public class GameApp extends GameApplication{
         scene.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
             pressedKeys.add(e.getCode());
 
-            if (e.getCode() == KeyCode.SPACE) {
+            if (e.getCode() == KeyCode.SPACE && matchStarted) {
                 shoot(player1, weapon1);
             }
-            if (e.getCode() == KeyCode.M) {
+            if (e.getCode() == KeyCode.M && matchStarted) {
                 shoot(player2, weapon2);
             }
-            if (e.getCode() == KeyCode.R) {
+            if (e.getCode() == KeyCode.R && matchStarted) {
                 weapon1.reload();
             }
-            if (e.getCode() == KeyCode.COMMA) {
+            if (e.getCode() == KeyCode.COMMA && matchStarted) {
                 weapon2.reload();
             }
         });
@@ -175,8 +180,9 @@ public class GameApp extends GameApplication{
 
          bullets.removeAll(toRemove);
 
-         checkMatchEnd();
+         hud.update(player1, player2, weapon1, weapon2);
 
+         checkMatchEnd();
          updateTitle();
     }
 
