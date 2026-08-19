@@ -108,6 +108,10 @@ public class Weapon {
         return !isReloading && magazine > 0 && shootCooldown <= 0;
     }
 
+    public int getRecoil() {
+        return type.getRecoil();
+    }
+
     public WeaponType getType() { return type; }
     public int getMagazine() { return magazine; }
     public int getMaxMagazine() { return type.getMagazineSize(); }
