@@ -18,11 +18,10 @@ public class Bullet {
     private boolean active;
     private int shooterId;
 
-    public Bullet(double startX, double startY, int facing, int damage, int knockback, int range, int shooterId, double spread) {
+    public Bullet(double startX, double startY, int facing, int damage, int knockback, int range, int shooterId) {
         this.x = startX + (facing == 1 ? 20 : -20);
         this.y = startY + 20;
         this.dx = facing * 800;
-        this.dy = spread * 800;
         this.damage = damage;
         this.knockback = knockback;
         this.range = range;
@@ -30,12 +29,12 @@ public class Bullet {
         this.active = true;
         this.shooterId = shooterId;
 
-        Rectangle shape = new Rectangle(12, 6);
+        Rectangle shape = new Rectangle(14, 6);
         shape.setFill(Color.YELLOW);
         shape.setArcWidth(4);
         shape.setArcHeight(4);
         shape.setStroke(Color.ORANGE);
-        shape.setStrokeWidth(1);
+        shape.setStrokeWidth(2);
 
         entity = new Entity();
         entity.getViewComponent().addChild(shape);
@@ -46,14 +45,10 @@ public class Bullet {
     }
 
     public void update(double delta) {
-        if (!active) {
-            return;
-        }
-
+        if (!active) return;
         x += dx * delta;
         y += dy * delta;
         distanceTraveled += Math.abs(dx * delta);
-
         entity.setPosition(x, y);
 
         if (x < -50 || x > 1330 || distanceTraveled > range) {
@@ -63,20 +58,18 @@ public class Bullet {
     }
 
     public boolean hitsPlayer(Player player) {
-        if (player.getPlayerId() == shooterId) {
-            return false;
-        }
-
-        if (player.isKnockedOut()) {
-            return false;
-        }
-
+        if (player.getPlayerId() == shooterId) return false;
+        if (player.isKnockedOut()) return false;
         double px = player.getX();
         double py = player.getY();
-        double pw = Player.WIDTH;
-        double ph = Player.HEIGHT;
+        return x > px && x < px + Player.WIDTH && y > py && y < py + Player.HEIGHT;
+    }
 
-        return x > px && x < px + pw && y > py && y < py + ph;
+    public boolean hitsBot(Bot bot) {
+        if (bot.isKnockedOut()) return false;
+        double px = bot.getX();
+        double py = bot.getY();
+        return x > px && x < px + Bot.WIDTH && y > py && y < py + Bot.HEIGHT;
     }
 
     public double getX() { return x; }
