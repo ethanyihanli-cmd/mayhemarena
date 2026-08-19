@@ -18,11 +18,11 @@ public class Bullet {
     private boolean active;
     private int shooterId;
 
-    public Bullet(double startX, double startY, int facing, int damage, int knockback, int range) {
+    public Bullet(double startX, double startY, int facing, int damage, int knockback, int range, int shooterId, double spread) {
         this.x = startX + (facing == 1 ? 20 : -20);
         this.y = startY + 20;
         this.dx = facing * 800;
-        this.dy = 0;
+        this.dy = spread * 800;
         this.damage = damage;
         this.knockback = knockback;
         this.range = range;

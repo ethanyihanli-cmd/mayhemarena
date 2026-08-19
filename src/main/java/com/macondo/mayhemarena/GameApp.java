@@ -8,6 +8,7 @@ import com.macondo.mayhemarena.entity.Player;
 import com.macondo.mayhemarena.map.MapLoader;
 import com.macondo.mayhemarena.match.MatchController;
 import com.macondo.mayhemarena.ui.HUD;
+import com.macondo.mayhemarena.ui.MainMenu;
 import com.macondo.mayhemarena.ui.MapSelection;
 import com.macondo.mayhemarena.ui.MatchMessage;
 import com.macondo.mayhemarena.ui.WeaponSelection;
@@ -18,11 +19,15 @@ import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
+import javafx.application.Platform;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 public class GameApp extends GameApplication{
 
@@ -65,14 +70,28 @@ public class GameApp extends GameApplication{
 
     @Override
     protected void initGame() {
-        MapSelection mapSelection = new MapSelection();
-        String map = mapSelection.showAndWait();
+        boolean start = runOnFxThread(() -> {
+            MainMenu mainMenu = new MainMenu();
+            return mainMenu.showAndWait();
+        });
+
+        if (!start) {
+            Platform.runLater(() -> FXGL.getPrimaryStage().close());
+            return;
+        }
+
+        String map = runOnFxThread(() -> {
+            MapSelection mapSelection = new MapSelection();
+            return mapSelection.showAndWait();
+        });
         if (map != null) {
             selectedMap = map;
         }
 
-        WeaponSelection selection = new WeaponSelection();
-        WeaponType[] selected = selection.showAndWait();
+        WeaponType[] selected = runOnFxThread(() -> {
+            WeaponSelection selection = new WeaponSelection();
+            return selection.showAndWait();
+        });
 
         if (selected == null) {
             p1Weapon = WeaponType.PISTOL;
@@ -85,8 +104,9 @@ public class GameApp extends GameApplication{
         mapLoader = new MapLoader();
         mapLoader.loadMap(selectedMap);
 
-        player1 = new Player(1, 500, 360);
-        player2 = new Player(2, 780, 360);
+        double[] spawns = mapLoader.getSpawnPositions();
+        player1 = new Player(1, spawns[0], spawns[1]);
+        player2 = new Player(2, spawns[2], spawns[3]);
 
         weapon1 = new Weapon(p1Weapon);
         weapon2 = new Weapon(p2Weapon);
@@ -130,16 +150,39 @@ public class GameApp extends GameApplication{
         matchController.startMatch();
 
         setupInput();
+    }
 
-        System.out.println("Map: " + selectedMap);
-        System.out.println("Player 1: " + p1Weapon.getName());
-        System.out.println("Player 2: " + p2Weapon.getName());
+    private <T> T runOnFxThread(Supplier<T> supplier) {
+        if (Platform.isFxApplicationThread()) {
+            return supplier.get();
+        }
 
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<T> result = new AtomicReference<>();
+        AtomicReference<RuntimeException> failure = new AtomicReference<>();
 
-        double[] spawns = mapLoader.getSpawnPositions();
-        player1 = new Player(1, spawns[0], spawns[1]);
-        player2 = new Player(2, spawns[2], spawns[3]);
+        Platform.runLater(() -> {
+            try {
+                result.set(supplier.get());
+            } catch (RuntimeException e) {
+                failure.set(e);
+            } finally {
+                latch.countDown();
+            }
+        });
 
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+
+        if (failure.get() != null) {
+            throw failure.get();
+        }
+
+        return result.get();
     }
 
     private void resetPlayers() {
@@ -280,7 +323,7 @@ public class GameApp extends GameApplication{
              player1.stopMoving();
          }
 
-         if (pressedKeys.contains(KeyCode.W) {
+         if (pressedKeys.contains(KeyCode.W)) {
              player1.jump();
          }
 
@@ -302,7 +345,7 @@ public class GameApp extends GameApplication{
      }
 
      private void updateTitle() {
-        FXGL.getSettings().setTitle(selectedMap + " | Round " + matchController.getRoundNumber() +
+        FXGL.getPrimaryStage().setTitle(selectedMap + " | Round " + matchController.getRoundNumber() +
                 " | P1: " + matchController.getPlayer1Wins() + " - " + matchController.getPlayer2Wins() + " P2");
     }
 

@@ -12,13 +12,18 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MapSelection {
     private String selectedMap;
     private boolean confirmed;
+    private List<Button> mapButtonsList;
 
     public MapSelection() {
         selectedMap = "Sky Ruins";
         confirmed = false;
+        mapButtonsList = new ArrayList<>();
     }
 
     public String showAndWait() {
@@ -49,30 +54,20 @@ public class MapSelection {
             Button btn = new Button(map);
             btn.setPrefWidth(200);
             btn.setPrefHeight(45);
-
-            if (map.equals(selectedMap)) {
-                btn.setStyle("-fx-background-color: #4a4a8a; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 8;");
-            } else {
-                btn.setStyle("-fx-background-color: #2a2a4a; -fx-text-fill: lightgray; -fx-font-size: 14px; -fx-background-radius: 8;");
-            }
+            applyMapButtonStyle(btn, map);
 
             btn.setOnAction(e -> {
                 selectedMap = map;
-                stage.close();
-                MapSelection fresh = new MapSelection();
-                fresh.selectedMap = map;
-                String result = fresh.showAndWait();
-                if (result != null) {
-                    selectedMap = result;
-                }
+                updateMapButtons();
             });
 
+            mapButtonsList.add(btn);
             mapButtons.getChildren().add(btn);
         }
 
         Button confirmBtn = new Button("SELECT MAP");
         confirmBtn.setStyle("-fx-font-size: 16px; -fx-background-color: #4a7a5a; -fx-text-fill: white; " +
-                "-fx-font-weight: bold; -fx-paddin: 8 30; -fx-background-radius: 8;");
+                "-fx-font-weight: bold; -fx-padding: 8 30; -fx-background-radius: 8;");
         confirmBtn.setOnAction(e -> {
             confirmed = true;
             stage.close();
@@ -88,5 +83,19 @@ public class MapSelection {
             return selectedMap;
         }
         return null;
+    }
+
+    private void updateMapButtons() {
+        for (Button button : mapButtonsList) {
+            applyMapButtonStyle(button, button.getText());
+        }
+    }
+
+    private void applyMapButtonStyle(Button button, String map) {
+        if (map.equals(selectedMap)) {
+            button.setStyle("-fx-background-color: #4a4a8a; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 8;");
+        } else {
+            button.setStyle("-fx-background-color: #2a2a4a; -fx-text-fill: lightgray; -fx-font-size: 14px; -fx-background-radius: 8;");
+        }
     }
 }

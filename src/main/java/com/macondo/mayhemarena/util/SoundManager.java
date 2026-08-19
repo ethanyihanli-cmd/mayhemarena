@@ -24,10 +24,10 @@ public class SoundManager {
 
     private void loadSounds() {
         try {
-            URL shootUrl = getClass().getResource("/sounds/shoot.wav");
-            URL reloadUrl = getClass().getResource("/sounds/reload.wav");
-            URL hitUrl = getClass().getResource("/sounds/hit.wav");
-            URL winUrl = getClass().getResource("/sounds/win.wav");
+            URL shootUrl = getClass().getResource("/com/macondo/mayhemarena/sounds/shoot.wav");
+            URL reloadUrl = getClass().getResource("/com/macondo/mayhemarena/sounds/reload.wav");
+            URL hitUrl = getClass().getResource("/com/macondo/mayhemarena/sounds/hit.wav");
+            URL winUrl = getClass().getResource("/com/macondo/mayhemarena/sounds/win.wav");
 
             if (shootUrl != null) {
                 sounds.put("shoot", new AudioClip(shootUrl.toString()));

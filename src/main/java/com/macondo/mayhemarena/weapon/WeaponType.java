@@ -35,6 +35,6 @@ public enum WeaponType {
     public int getDamage() { return damage; }
     public int getKnockback() {return knockback; }
     public int getRange() { return range; }
-    public int getReloadTime() { return reloadTime; }
+    public double getReloadTime() { return reloadTime; }
     public int getRecoil() { return recoil; }
 }

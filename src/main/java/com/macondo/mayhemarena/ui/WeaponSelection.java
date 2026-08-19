@@ -20,6 +20,8 @@ public class WeaponSelection {
     private WeaponType selectedPlayer1;
     private WeaponType selectedPlayer2;
     private boolean confirmed;
+    private VBox p1Buttons;
+    private VBox p2Buttons;
 
     public WeaponSelection() {
         selectedPlayer1 = WeaponType.PISTOL;
@@ -35,7 +37,7 @@ public class WeaponSelection {
 
         VBox root = new VBox(20);
         root.setAlignment(Pos.CENTER);
-        root.setFont("-fx-background-color: #1a1a2e; -fx-border-color: #4a4a8a; -fx-border-width: 3;");
+        root.setStyle("-fx-background-color: #1a1a2e; -fx-border-color: #4a4a8a; -fx-border-width: 3;");
         root.setPrefSize(600, 450);
 
         Label title = new Label("SELECTED WEAPONS");
@@ -56,7 +58,19 @@ public class WeaponSelection {
         p1Label.setTextFill(Color.LIME);
         grid.add(p1Label, 0, 0);
 
-        VBox p2Buttons = new VBox(10);
+        Label p2Label = new Label("Player 2 (red)");
+        p2Label.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        p2Label.setTextFill(Color.RED);
+        grid.add(p2Label, 1, 0);
+
+        p1Buttons = new VBox(10);
+        for (WeaponType type : WeaponType.values()) {
+            Button btn = createWeaponButton(type, 1);
+            p1Buttons.getChildren().add(btn);
+        }
+        grid.add(p1Buttons, 0, 1);
+
+        p2Buttons = new VBox(10);
         for (WeaponType type : WeaponType.values()) {
             Button btn = createWeaponButton(type, 2);
             p2Buttons.getChildren().add(btn);
@@ -113,7 +127,12 @@ public class WeaponSelection {
     }
 
     private void updateButtons() {
-
+        p1Buttons.getChildren().clear();
+        p2Buttons.getChildren().clear();
+        for (WeaponType type : WeaponType.values()) {
+            p1Buttons.getChildren().add(createWeaponButton(type, 1));
+            p2Buttons.getChildren().add(createWeaponButton(type, 2));
+        }
     }
 
 }

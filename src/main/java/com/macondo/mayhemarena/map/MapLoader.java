@@ -9,7 +9,7 @@ public class MapLoader {
     private List<Platform> platforms;
     private String currentMap;
 
-    public class MapLoader {
+    public MapLoader() {
         platforms = new ArrayList<>();
         currentMap = "Sky Ruins";
     }
