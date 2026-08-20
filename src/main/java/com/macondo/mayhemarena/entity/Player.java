@@ -2,6 +2,7 @@ package com.macondo.mayhemarena.entity;
 
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
+import com.macondo.mayhemarena.model.PerkType;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
@@ -25,6 +26,12 @@ public class Player {
     private int maxHealth;
     private boolean knockedOut;
 
+    private PerkType perk;
+    private int jumpCount;
+    private int maxJumps;
+    private double speedMultiplier;
+    private double knockbackResist;
+
     private Entity entity;
     private Rectangle body;
     private Rectangle hat;
@@ -41,12 +48,42 @@ public class Player {
         jumping = false;
         facing = 1;
 
+        perk = null;
+        maxJumps = 1;
+        jumpCount = 0;
+        speedMultiplier = 1.0;
+        knockbackResist = 1.0;
+
         health = 100;
         maxHealth = 100;
         knockedOut = false;
 
         createEntity();
         FXGL.getGameWorld().addEntity(entity);
+    }
+
+    public void applyPerk(PerkType perkType) {
+        this.perk = perkType;
+
+        switch (perkType) {
+            case DOUBLE_JUMP:
+                maxJumps = 2;
+                break;
+            case SPEED_BOOST:
+                speedMultiplier = 1.2;
+                break;
+            case KNOCKBACK_RESIST:
+                knockbackResist = 0.6;
+                break;
+            case HEALTH_BOOST:
+                maxHealth = 130;
+                health = maxHealth;
+                break;
+            default:
+                break;
+
+        }
+
     }
 
     private void createEntity() {
@@ -153,8 +190,11 @@ public class Player {
             return;
         }
 
-        double knockbackForce = grounded ? force * 0.3 : force * 0.5;
-        dx += direction * force * 0.5;
+        double resist = 1.0 - (1.0 - knockbackResist) * 0.6;
+
+        double knockbackForce = grounded ? force * 0.3 * resist : force * 0.5 * resist;
+
+        dx += direction * knockbackForce;
         dy = -100;
 
         if (dx > 800) dx = 800;
@@ -166,6 +206,7 @@ public class Player {
         knockedOut = false;
         dx = 0;
         dy = 0;
+        jumpCount = 0;
 
         if (playerId == 1) {
             body.setFill(Color.GREEN);
@@ -255,4 +296,5 @@ public class Player {
      public boolean isKnockedOut() {
         return knockedOut;
      }
+     public PerkType getPerk() { return perk; }
 }

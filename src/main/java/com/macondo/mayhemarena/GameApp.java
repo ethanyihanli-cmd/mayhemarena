@@ -7,6 +7,7 @@ import com.macondo.mayhemarena.entity.*;
 import com.macondo.mayhemarena.map.MapLoader;
 import com.macondo.mayhemarena.match.MatchController;
 import com.macondo.mayhemarena.model.GameTheme;
+import com.macondo.mayhemarena.model.PerkType;
 import com.macondo.mayhemarena.ui.BackgroundRenderer;
 import com.macondo.mayhemarena.ui.HUD;
 import com.macondo.mayhemarena.ui.MatchMessage;
@@ -46,6 +47,13 @@ public class GameApp extends GameApplication{
 
     private Set<KeyCode> pressedKeys;
 
+    private WeaponType p1Weapon;
+    private WeaponType p2Weapon;
+    private String selectedMap;
+
+    private PerkType p1Perk;
+    private PerkType p2Perk;
+
     public GameApp() {
         pressedKeys = new HashSet<>();
         bullets = new ArrayList<>();
@@ -56,6 +64,9 @@ public class GameApp extends GameApplication{
         selectedMap = "Sky Ruins";
         p1Weapon = WeaponType.PISTOL;
         p2Weapon = WeaponType.PISTOL;
+
+        p1Perk = null;
+        p2Perk = null;
     }
 
     @Override
@@ -91,19 +102,36 @@ public class GameApp extends GameApplication{
             p2Weapon = weapons[1];
         }
 
+        PerkSelection perkSelect = new PerkSelection();
+        PerkType[] perks = perkSelect.showAndWait();
+        if (perks != null) {
+            p1Perk = perks[0];
+            p2Perk = perks[1];
+        }
+
         mapLoader = new MapLoader();
         mapLoader.loadMap(selectedMap);
 
         double[] spawns = mapLoader.getSpawnPositions();
         player1 = new Player(1, spawns[0], spawns[1]);
 
+        if (p1Perk != null) {
+            player1.applyPerk(p1Perk);
+        }
+
         vsBot = true;
 
         if (vsBot) {
             bot = new Bot(spawns[2], spawns[3], 1);
+            if (p2Perk != null) {
+                bot.applyPerk(p2Perk);
+            }
             botWeapon = new Weapon(p2Weapon);
         } else {
             player2 = new Player(2, spawns[2], spawns[3]);
+            if (p2Perk != null) {
+                player2.applyPerk(p2Perk);
+            }
             weapon2 = new Weapon(p2Weapon);
         }
 
