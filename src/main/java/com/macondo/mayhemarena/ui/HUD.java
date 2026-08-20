@@ -99,29 +99,18 @@ public class HUD {
     }
 
     public void update(Player player1, Player player2, Weapon weapon1, Weapon weapon2) {
-        double p1HealthPercent = player1.getHealth() / (double) player1.getMaxHealth();
-        p1HealthFill.setWidth(196 * p1HealthPercent);
+        updatePlayer(player1, weapon1, true);
+        updatePlayer(player2, weapon2, false);
+    }
 
-        if (p1HealthPercent > 0.5) {
-            p1HealthFill.setFill(Color.LIME);
-        } else if (p1HealthPercent > 0.25) {
-            p1HealthFill.setFill(Color.YELLOW);
-        } else {
-            p1HealthFill.setFill(Color.RED);
-        }
+    public void update(Player player1, Bot bot, Weapon weapon1, Weapon weapon2) {
+        updatePlayer(player1, weapon1, true);
+        double healthPercent = bot.getHealth() / (double) bot.getMaxHealth();
+        p2HealthFill.setWidth(196 * healthPercent);
 
-        String p1Ammo = weapon1.getMagazine() + "/" + weapon1.getMaxMagazine();
-        String p1Total = weapon1.getCurrentAmmo() + "/" + weapon1.getMaxAmmo();
-        String p1Status = weapon1.isReloading() ? " [RELOADING]" : "";
-        p1AmmoText.setText(p1Ammo + " " + p1Total + p1Status);
-        p1WeaponText.setText(weapon1.getType().getName());
-
-        double p2HealthPercent = player2.getHealth() / (double) player2.getMaxHealth();
-        p2HealthFill.setWidth(196 * p2HealthPercent);
-
-        if (p2HealthPercent > 0.5) {
+        if (healthPercent > 0.5) {
             p2HealthFill.setFill(Color.LIME);
-        } else if (p2HealthPercent > 0.25) {
+        } else if (healthPercent > 0.25) {
             p2HealthFill.setFill(Color.YELLOW);
         } else {
             p2HealthFill.setFill(Color.RED);
@@ -132,6 +121,34 @@ public class HUD {
         String p2Status = weapon2.isReloading() ? " [RELOADING]" : "";
         p2AmmoText.setText(p2Ammo + " " + p2Total + p2Status);
         p2WeaponText.setText(weapon2.getType().getName());
+    }
+
+        private void updatePlayer(Player player, Weapon weapon, boolean isPlayer1) {
+            double healthPercent = player.getHealth() / (double) player.getMaxHealth();
+            Rectangle fill = isPlayer1 ? p1HealthFill : p2HealthFill;
+            fill.setWidth(196 * healthPercent);
+
+            if (healthPercent > 0.5) {
+                fill.setFill(Color.LIME);
+            } else if (healthPercent > 0.25) {
+                fill.setFill(Color.YELLOW);
+            } else {
+                fill.setFill(Color.RED);
+            }
+
+            String ammo = weapon.getMagazine() + "/" + weapon.getMaxMagazine();
+            String total = weapon.getCurrentAmmo() + "/" + weapon.getMaxAmmo();
+            String status = weapon.isReloading() ? " [RELOADING]" : "";
+
+            if (isPlayer1) {
+                p1AmmoText.setText(ammo + " " + total + status);
+                p1WeaponText.setText(weapon.getType().getName());
+            } else {
+                p2AmmoText.setText(ammo + " " + total + status);
+                p2WeaponText.setText(weapon.getType().getName());
+            }
+
+
 
     }
 }

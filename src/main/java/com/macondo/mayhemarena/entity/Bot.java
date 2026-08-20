@@ -45,23 +45,8 @@ public class Bot {
         maxHealth = 100;
         knockedOut = false;
 
-        public Bot(double startX, double startY, int difficulty) {
-            this.x = startX;
-            this.y = startY;
-            this.difficulty = difficulty;
-            dx = 0;
-            dy = 0;
-            grounded = false;
-            jumping = false;
-            facing = 1;
-            state = "idle";
-            stateTimer = 0;
-            health = 100;
-            maxHealth = 100;
-            knockedOut = false;
-
-            createEntity();
-            FXGL.getGameWorld().addEntity(entity);
+        createEntity();
+        FXGL.getGameWorld().addEntity(entity);
         }
 
         private void createEntity() {

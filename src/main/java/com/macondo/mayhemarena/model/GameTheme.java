@@ -11,7 +11,7 @@ public class GameTheme {
     private Color bulletColor;
     private Color hudColor;
 
-    public GameTheme(String name, Color backgroundColor, Color platformColor
+    public GameTheme(String name, Color backgroundColor, Color platformColor,
                      Color player1Color, Color player2Color, Color bulletColor, Color hudColor) {
         this.name = name;
         this.backgroundColor = backgroundColor;
