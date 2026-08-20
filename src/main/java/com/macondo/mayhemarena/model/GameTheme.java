@@ -43,5 +43,17 @@ public class GameTheme {
 
     }
 
+    public static GameTheme arenaTheme() {
+        return new GameTheme(
+                "Arena",
+                Color.rgb(10, 15, 40),
+                Color.GRAY,
+                Color.GREEN,
+                Color.RED,
+                Color.YELLOW,
+                Color.WHITE
+        );
+    }
+
 
 }

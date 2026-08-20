@@ -13,6 +13,7 @@ import com.macondo.mayhemarena.ui.MatchMessage;
 import com.macondo.mayhemarena.weapon.Weapon;
 import com.macondo.mayhemarena.weapon.WeaponType;
 import javafx.scene.Scene;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
@@ -50,8 +51,11 @@ public class GameApp extends GameApplication{
         bullets = new ArrayList<>();
         matchStarted = false;
         vsBot = true;
-        theme = GameTheme.defaultTheme();
+        theme = GameTheme.arenaTheme();
         matchController = new MatchController();
+        selectedMap = "Sky Ruins";
+        p1Weapon = WeaponType.PISTOL;
+        p2Weapon = WeaponType.PISTOL;
     }
 
     @Override
@@ -67,20 +71,43 @@ public class GameApp extends GameApplication{
 
     @Override
     protected void initGame() {
+        MainMenu mainMenu = new MainMenu();
+        boolean start = mainMenu.showAndWait();
+        if (!start) {
+            FXGL.getPrimaryStage().close();
+            return;
+        }
+
+        MapSelection mapSelect = new MapSelection();
+        String map = mapSelect.showAndWait();
+        if (map != null) {
+            selectedMap = map;
+        }
+
+        WeaponSelection weaponSelect = new WeaponSelection();
+        WeaponType[] weapons = weaponSelect.showAndWait();
+        if (weapons != null) {
+            p1Weapon = weapons[0];
+            p2Weapon = weapons[1];
+        }
+
         mapLoader = new MapLoader();
-        mapLoader.loadMap("Sky Ruins");
+        mapLoader.loadMap(selectedMap);
 
         double[] spawns = mapLoader.getSpawnPositions();
         player1 = new Player(1, spawns[0], spawns[1]);
+
+        vsBot = true;
+
         if (vsBot) {
             bot = new Bot(spawns[2], spawns[3], 1);
-            botWeapon = new Weapon(WeaponType.PISTOL);
+            botWeapon = new Weapon(p2Weapon);
         } else {
             player2 = new Player(2, spawns[2], spawns[3]);
-            weapon2 = new Weapon(WeaponType.PISTOL);
+            weapon2 = new Weapon(p2Weapon);
         }
 
-        weapon1 = new Weapon(WeaponType.PISTOL);
+        weapon1 = new Weapon(p1Weapon);
 
         hud = new HUD();
         matchMessage = new MatchMessage();
@@ -197,6 +224,8 @@ public class GameApp extends GameApplication{
 
     @Override
     protected void onUpdate(double delta) {
+        renderBackground();
+
         if (!matchStarted) {
             return;
         }
@@ -265,7 +294,6 @@ public class GameApp extends GameApplication{
              hud.update(player1, player2, weapon1, weapon2);
          }
 
-
          if (matchController.isRoundActive()) {
              if(player1.isKnockedOut()) {
                  matchController.endRound(vsBot ? bot : player2);
@@ -317,6 +345,11 @@ public class GameApp extends GameApplication{
         String info = selectedMap + " | Round " + matchController.getRoundNumber() +
                 " | P1: " + matchController.getPlayer1Wins() + " - " + matchController.getPlayer2Wins() + " P2";
         FXGL.getSettings().setTitle(info);
+    }
+
+    private void renderBackground() {
+        GraphicsContext gc = FXGL.getGameScene().getViewport().getGraphicsContext2D();
+        BackgroundRenderer.draw(gc, theme);
     }
 
     private String selectedMap = "Sky Ruins";
