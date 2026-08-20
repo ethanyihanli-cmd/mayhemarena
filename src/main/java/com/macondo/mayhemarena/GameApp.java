@@ -89,11 +89,14 @@ public class GameApp extends GameApplication{
             return;
         }
 
-        MapSelection mapSelect = new MapSelection();
-        String map = mapSelect.showAndWait();
-        if (map != null) {
-            selectedMap = map;
+        SetupMenu setupMenu = new SetupMenu();
+        SetupMenu.SetupResult setupResult = setupMenu.showAndWait();
+        if (setupResult == null) {
+            FXGL.getPrimaryStage().close();
+            return;
         }
+        selectedMap = setupResult.map;
+        vsBot = setupResult.vsBot;
 
         WeaponSelection weaponSelect = new WeaponSelection();
         WeaponType[] weapons = weaponSelect.showAndWait();
@@ -119,7 +122,6 @@ public class GameApp extends GameApplication{
             player1.applyPerk(p1Perk);
         }
 
-        vsBot = true;
 
         if (vsBot) {
             bot = new Bot(spawns[2], spawns[3], 1);
