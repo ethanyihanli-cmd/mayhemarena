@@ -18,6 +18,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -204,6 +205,23 @@ public class GameApp extends GameApplication{
         Scene scene = FXGL.getPrimaryStage().getScene();
 
         scene.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == KeyCode.ESCAPE && matchStarted) {
+                ExitMenu exitMenu = new ExitMenu();
+                ExitMenu.ExitAction action = exitMenu.showAndWait();
+
+                switch (action) {
+                    case RESUME:
+                        break;
+                    case MENU:
+                        matchStarted = false;
+                        FXGL.getPrimaryStage().close();
+                        restartApp();
+                        break;
+                    case EXIT:
+                        System.exit(0);
+                        break;
+                }
+            }
             pressedKeys.add(e.getCode());
 
             if (e.getCode() == KeyCode.SPACE && matchStarted && matchController.isRoundActive()) {
@@ -382,7 +400,17 @@ public class GameApp extends GameApplication{
         BackgroundRenderer.draw(gc, theme);
     }
 
-    private String selectedMap = "Sky Ruins";
+    private void restartApp() {
+        Platform.runLater(() -> {
+            try {
+                GameApp newApp = new GameApp();
+                Stage newStage = new Stage();
+                newApp.start(newStage);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+    }
 
     public static void main(String[] args) {
         launch(args);
