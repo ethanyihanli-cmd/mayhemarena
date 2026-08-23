@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MayhemArena HTML</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #10131a;
+      color: #f8fafc;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .shell {
+      width: min(100vw, 1280px);
+      padding: 12px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    button {
+      border: 1px solid #3b4456;
+      background: #202738;
+      color: #f8fafc;
+      border-radius: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button:hover {
+      background: #2d374d;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #182033;
+      border: 1px solid #2d3748;
+    }
+
+    .help {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .help div {
+      background: #171d29;
+      border: 1px solid #2d3748;
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .help {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <h1>MayhemArena</h1>
+      <button id="restart">Restart Match</button>
+    </div>
+    <canvas id="game" width="1280" height="720"></canvas>
+    <section class="help" aria-label="Controls">
+      <div><strong>Player 1</strong><br>A/D move, W jump, S drop, Space shoot, R reload</div>
+      <div><strong>Player 2</strong><br>Left/Right move, Up jump, Down drop, M shoot, comma reload</div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const keys = new Set();
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const PIT_Y = 760;
+    const GRAVITY = 1900;
+    const ROUND_WINS = 2;
+
+    const weapons = {
+      pistol: { name: "Pistol", mag: 12, ammo: 48, damage: 22, knockback: 180, cooldown: 0.28, reload: 1.1, speed: 950, life: 1.6, recoil: 40, spread: 0, pellets: 1 },
+      rifle: { name: "Rifle", mag: 30, ammo: 90, damage: 16, knockback: 110, cooldown: 0.12, reload: 1.5, speed: 1100, life: 1.6, recoil: 22, spread: 0, pellets: 1 },
+      shotgun: { name: "Shotgun", mag: 6, ammo: 18, damage: 15, knockback: 120, cooldown: 0.88, reload: 1.8, speed: 820, life: 0.45, recoil: 110, spread: 0.25, pellets: 6 }
+    };
+
+    const platforms = [
+      { x: 0, y: 654, w: 380, h: 66, color: "#7c5a38" },
+      { x: 500, y: 654, w: 280, h: 66, color: "#7c5a38" },
+      { x: 960, y: 654, w: 320, h: 66, color: "#7c5a38" },
+      { x: 120, y: 550, w: 260, h: 18, color: "#64748b" },
+      { x: 510, y: 430, w: 220, h: 18, color: "#64748b" },
+      { x: 900, y: 520, w: 250, h: 18, color: "#64748b" },
+      { x: 310, y: 300, w: 180, h: 18, color: "#64748b" },
+      { x: 760, y: 260, w: 190, h: 18, color: "#64748b" }
+    ];
+
+    let bullets = [];
+    let message = "";
+    let messageTimer = 0;
+    let roundNumber = 1;
+    let p1Wins = 0;
+    let p2Wins = 0;
+    let roundActive = true;
+    let matchOver = false;
+    let lastTime = performance.now();
+
+    function makePlayer(id, x, y, color, controls, weaponName) {
+      const type = weapons[weaponName];
+      return {
+        id, x, y, w: 34, h: 58, dx: 0, dy: 0, facing: id === 1 ? 1 : -1,
+        grounded: false, jumping: false, health: 100, maxHealth: 100,
+        color, controls, weaponName, weapon: { clip: type.mag, reserve: type.ammo - type.mag, cooldown: 0, reloadTimer: 0 }
+      };
+    }
+
+    let p1;
+    let p2;
+
+    function resetPlayers() {
+      p1 = makePlayer(1, 150, 590, "#22c55e", { left: "KeyA", right: "KeyD", jump: "KeyW", down: "KeyS", shoot: "Space", reload: "KeyR" }, "pistol");
+      p2 = makePlayer(2, 1060, 590, "#ef4444", { left: "ArrowLeft", right: "ArrowRight", jump: "ArrowUp", down: "ArrowDown", shoot: "KeyM", reload: "Comma" }, "shotgun");
+      bullets = [];
+    }
+
+    function startMatch() {
+      p1Wins = 0;
+      p2Wins = 0;
+      roundNumber = 1;
+      roundActive = true;
+      matchOver = false;
+      message = "ROUND 1";
+      messageTimer = 1.2;
+      resetPlayers();
+    }
+
+    function startNextRound() {
+      roundNumber++;
+      roundActive = true;
+      message = "ROUND " + roundNumber;
+      messageTimer = 1.2;
+      resetPlayers();
+    }
+
+    function endRound(winner) {
+      if (!roundActive) return;
+      roundActive = false;
+      if (winner === 1) p1Wins++;
+      if (winner === 2) p2Wins++;
+
+      if (p1Wins >= ROUND_WINS || p2Wins >= ROUND_WINS) {
+        matchOver = true;
+        message = "PLAYER " + winner + " WINS MATCH";
+        messageTimer = 999;
+      } else {
+        message = "PLAYER " + winner + " WINS ROUND";
+        messageTimer = 1.7;
+        setTimeout(startNextRound, 1700);
+      }
+    }
+
+    function handleInput(player, dt) {
+      const c = player.controls;
+      const left = keys.has(c.left);
+      const right = keys.has(c.right);
+
+      if (left && !right) {
+        player.dx = -320;
+        player.facing = -1;
+      } else if (right && !left) {
+        player.dx = 320;
+        player.facing = 1;
+      } else {
+        player.dx *= player.grounded ? 0.35 : 0.92;
+        if (Math.abs(player.dx) < 18) player.dx = 0;
+      }
+
+      if (keys.has(c.jump) && !player.jumping && player.grounded) {
+        player.dy = -760;
+        player.grounded = false;
+        player.jumping = true;
+      }
+
+      if (keys.has(c.down) && !player.grounded) {
+        player.dy = Math.max(player.dy, 980);
+      }
+
+      if (keys.has(c.shoot)) {
+        shoot(player);
+      }
+
+      if (keys.has(c.reload)) {
+        reload(player);
+      }
+    }
+
+    function reload(player) {
+      const type = weapons[player.weaponName];
+      const wpn = player.weapon;
+      if (wpn.reloadTimer > 0 || wpn.clip === type.mag || wpn.reserve <= 0) return;
+      wpn.reloadTimer = type.reload;
+    }
+
+    function shoot(player) {
+      if (!roundActive) return;
+      const type = weapons[player.weaponName];
+      const wpn = player.weapon;
+      if (wpn.cooldown > 0 || wpn.reloadTimer > 0 || wpn.clip <= 0) return;
+
+      wpn.clip--;
+      wpn.cooldown = type.cooldown;
+      player.dx -= player.facing * type.recoil * 10;
+
+      for (let i = 0; i < type.pellets; i++) {
+        const offset = type.pellets === 1 ? 0 : (i - (type.pellets - 1) / 2) * type.spread;
+        bullets.push({
+          owner: player.id,
+          x: player.x + player.w / 2 + player.facing * 24,
+          y: player.y + 28,
+          vx: player.facing * type.speed,
+          vy: offset * type.speed,
+          life: type.life,
+          damage: type.damage,
+          knockback: type.knockback,
+          w: 12,
+          h: 4
+        });
+      }
+    }
+
+    function updateWeapon(player, dt) {
+      const type = weapons[player.weaponName];
+      const wpn = player.weapon;
+      wpn.cooldown = Math.max(0, wpn.cooldown - dt);
+      if (wpn.reloadTimer > 0) {
+        wpn.reloadTimer -= dt;
+        if (wpn.reloadTimer <= 0) {
+          const needed = type.mag - wpn.clip;
+          const loaded = Math.min(needed, wpn.reserve);
+          wpn.clip += loaded;
+          wpn.reserve -= loaded;
+          wpn.reloadTimer = 0;
+        }
+      }
+    }
+
+    function updatePlayer(player, dt) {
+      const oldY = player.y;
+      player.dy += GRAVITY * dt;
+      player.dy = Math.min(player.dy, 1200);
+      player.x += player.dx * dt;
+      player.y += player.dy * dt;
+      player.x = Math.max(0, Math.min(W - player.w, player.x));
+      player.grounded = false;
+
+      for (const plat of platforms) {
+        const alignX = player.x + player.w - 6 > plat.x && player.x + 6 < plat.x + plat.w;
+        const wasAbove = oldY + player.h <= plat.y + 4;
+        const hitTop = player.y + player.h >= plat.y && oldY + player.h <= plat.y + Math.max(14, player.dy * dt + 8);
+        if (alignX && wasAbove && hitTop && player.dy >= 0) {
+          player.y = plat.y - player.h;
+          player.dy = 0;
+          player.grounded = true;
+          player.jumping = false;
+        }
+      }
+    }
+
+    function hitRect(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function updateBullets(dt) {
+      for (const bullet of bullets) {
+        bullet.x += bullet.vx * dt;
+        bullet.y += bullet.vy * dt;
+        bullet.life -= dt;
+
+        const target = bullet.owner === 1 ? p2 : p1;
+        if (hitRect(bullet, target)) {
+          target.health = Math.max(0, target.health - bullet.damage);
+          target.dx += Math.sign(bullet.vx) * bullet.knockback * 0.5;
+          target.dy = -120;
+          bullet.life = 0;
+        }
+      }
+      bullets = bullets.filter(b => b.life > 0 && b.x > -80 && b.x < W + 80 && b.y > -80 && b.y < H + 80);
+    }
+
+    function update(dt) {
+      messageTimer = Math.max(0, messageTimer - dt);
+      if (!roundActive || matchOver) return;
+
+      handleInput(p1, dt);
+      handleInput(p2, dt);
+      updateWeapon(p1, dt);
+      updateWeapon(p2, dt);
+      updatePlayer(p1, dt);
+      updatePlayer(p2, dt);
+      updateBullets(dt);
+
+      if (p1.y > PIT_Y || p1.health <= 0) endRound(2);
+      if (p2.y > PIT_Y || p2.health <= 0) endRound(1);
+    }
+
+    function drawPlayer(player) {
+      ctx.save();
+      ctx.translate(player.x + player.w / 2, player.y);
+      ctx.scale(player.facing, 1);
+      ctx.fillStyle = player.color;
+      ctx.strokeStyle = "#020617";
+      ctx.lineWidth = 2;
+      roundRect(-player.w / 2, 10, player.w, player.h - 10, 8, true);
+      ctx.fillStyle = player.id === 1 ? "#1e3a8a" : "#7f1d1d";
+      roundRect(-player.w / 2 + 3, -2, player.w - 6, 12, 6, true);
+      ctx.fillStyle = "#bae6fd";
+      roundRect(-5, 30, 10, 6, 3, true);
+      ctx.fillStyle = "#334155";
+      roundRect(player.w / 2 - 3, 36, 22, 5, 3, true);
+      ctx.restore();
+    }
+
+    function roundRect(x, y, w, h, r, fill) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      if (fill) ctx.fill();
+      ctx.stroke();
+    }
+
+    function drawBar(x, y, w, h, value, max, color) {
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, w * Math.max(0, value / max), h);
+      ctx.strokeStyle = "#475569";
+      ctx.strokeRect(x, y, w, h);
+    }
+
+    function draw() {
+      const sky = ctx.createLinearGradient(0, 0, 0, H);
+      sky.addColorStop(0, "#1b2a44");
+      sky.addColorStop(1, "#10131a");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = "#263143";
+      for (let i = 0; i < 45; i++) {
+        const x = (i * 97 + 31) % W;
+        const y = (i * 53 + 21) % 250;
+        ctx.fillRect(x, y, 2, 2);
+      }
+
+      for (const plat of platforms) {
+        ctx.fillStyle = plat.color;
+        ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+        ctx.fillStyle = "rgba(255,255,255,0.14)";
+        ctx.fillRect(plat.x, plat.y, plat.w, 5);
+      }
+
+      for (const bullet of bullets) {
+        ctx.fillStyle = "#fde047";
+        ctx.fillRect(bullet.x, bullet.y, bullet.w, bullet.h);
+      }
+
+      drawPlayer(p1);
+      drawPlayer(p2);
+
+      drawBar(24, 24, 260, 18, p1.health, p1.maxHealth, "#22c55e");
+      drawBar(W - 284, 24, 260, 18, p2.health, p2.maxHealth, "#ef4444");
+
+      ctx.fillStyle = "#f8fafc";
+      ctx.font = "18px Arial";
+      ctx.textAlign = "left";
+      ctx.fillText(`P1 ${p1Wins} | ${weapons[p1.weaponName].name} ${p1.weapon.clip}/${p1.weapon.reserve}`, 24, 68);
+      ctx.textAlign = "right";
+      ctx.fillText(`P2 ${p2Wins} | ${weapons[p2.weaponName].name} ${p2.weapon.clip}/${p2.weapon.reserve}`, W - 24, 68);
+      ctx.textAlign = "center";
+      ctx.fillText(`Round ${roundNumber}`, W / 2, 36);
+
+      if (messageTimer > 0 || matchOver) {
+        ctx.fillStyle = "rgba(15, 23, 42, 0.72)";
+        ctx.fillRect(0, 290, W, 110);
+        ctx.fillStyle = "#facc15";
+        ctx.font = "44px Arial";
+        ctx.fillText(message, W / 2, 360);
+      }
+    }
+
+    function loop(now) {
+      const dt = Math.min(0.033, (now - lastTime) / 1000);
+      lastTime = now;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    addEventListener("keydown", e => {
+      keys.add(e.code);
+      if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
+        e.preventDefault();
+      }
+    });
+
+    addEventListener("keyup", e => {
+      keys.delete(e.code);
+      if (p1 && e.code === p1.controls.jump) p1.jumping = false;
+      if (p2 && e.code === p2.controls.jump) p2.jumping = false;
+    });
+
+    document.getElementById("restart").addEventListener("click", startMatch);
+
+    startMatch();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
