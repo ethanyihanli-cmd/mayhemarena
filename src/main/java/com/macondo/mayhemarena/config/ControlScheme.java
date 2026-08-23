@@ -9,12 +9,24 @@ public class ControlScheme {
      private KeyCode downKey;
      private KeyCode shootKey;
 
+     private KeyCode reloadKey;
+
      public ControlScheme(KeyCode left, KeyCode right, KeyCode jump, KeyCode down, KeyCode shoot) {
           this.leftKey = left;
           this.rightKey = right;
           this.jumpKey = jump;
           this.downKey = down;
           this.shootKey = shoot;
+          this.reloadKey = KeyCode.R;
+     }
+
+     public ControlScheme(KeyCode left, KeyCode right, KeyCode jump, KeyCode down, KeyCode shoot, KeyCode reload) {
+         this.leftKey = left;
+         this.rightKey = right;
+         this.jumpKey = jump;
+         this.downKey = down;
+         this.shootKey = shoot;
+         this.reloadKey = reload;
      }
 
      public static ControlScheme playerOneDefault() {
@@ -40,5 +52,9 @@ public class ControlScheme {
              default:
                  return null;
           }
+     }
+
+     public KeyCode getReloadKey() {
+         return reloadKey;
      }
 }

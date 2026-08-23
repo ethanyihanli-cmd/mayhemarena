@@ -55,6 +55,9 @@ public class GameApp extends GameApplication{
     private PerkType p1Perk;
     private PerkType p2Perk;
 
+    private ControlScheme p1Controls;
+    private ControlScheme p2Controls;
+
     public GameApp() {
         pressedKeys = new HashSet<>();
         bullets = new ArrayList<>();
@@ -68,6 +71,9 @@ public class GameApp extends GameApplication{
 
         p1Perk = null;
         p2Perk = null;
+
+        p1Controls = ControlScheme.playerOneDefault();
+        p2Controls = ControlScheme.playerTwoDefault();
     }
 
     @Override
@@ -111,6 +117,13 @@ public class GameApp extends GameApplication{
         if (perks != null) {
             p1Perk = perks[0];
             p2Perk = perks[1];
+        }
+
+        ControlRemap controlRemap = new ControlRemap();
+        ControlScheme[] controls = controlRemap.showAndWait();
+        if (controls != null) {
+            p1Controls = controls[0];
+            p2Controls = controls[1];
         }
 
         mapLoader = new MapLoader();
@@ -224,6 +237,13 @@ public class GameApp extends GameApplication{
             }
             pressedKeys.add(e.getCode());
 
+            if (e.getCode() == p1Controls.getReloadKey() && matchStarted && matchController.isRoundActive()) {
+                weapon1.reload();
+            }
+            if (!vsBot && e.getCode() == p2Controls.getReloadKey() && matchStarted && matchController.isRoundActive()) {
+
+            }
+
             if (e.getCode() == KeyCode.SPACE && matchStarted && matchController.isRoundActive()) {
                 shoot(player1, weapon1);
             }
@@ -241,11 +261,11 @@ public class GameApp extends GameApplication{
         scene.addEventFilter(KeyEvent.KEY_RELEASED, e -> {
              pressedKeys.remove(e.getCode());
 
-             if (e.getCode() == KeyCode.W) {
+             if (e.getCode() == p1Controls.getKey(PlayerAction.JUMP)) {
                   player1.releaseJump();
              }
 
-             if (!vsBot && e.getCode() == KeyCode.UP) {
+             if (!vsBot && e.getCode() == p2Controls.getKey(PlayerAction.JUMP)) {
                  player2.releaseJump();
              }
         });
@@ -356,24 +376,33 @@ public class GameApp extends GameApplication{
     }
 
      private void handleInput(double delta) {
-         boolean p1left = pressedKeys.contains(KeyCode.A);
-         boolean p1right = pressedKeys.contains(KeyCode.D);
+         boolean p1Left = pressedKeys.contains(p1Controls.getKey(PlayerAction.LEFT));
+         boolean p1Right = pressedKeys.contains(p1Controls.getKey(PlayerAction.RIGHT));
+         boolean p1Jump = pressedKeys.contains(p1Controls.getKey(PlayerAction.JUMP));
+         boolean p1Shoot = pressedKeys.contains(p1Controls.getKey(PlayerAction.SHOOT));
 
-         if (p1left && !p1right) {
+         if (p1Left && !p1Right) {
              player1.moveLeft(delta);
-         } else if (p1right && !p1left) {
+         } else if (p1Right && !p1Left) {
              player1.moveRight(delta);
          } else {
              player1.stopMoving();
          }
 
-         if (pressedKeys.contains(KeyCode.W)) {
+         if (p1Jump) {
              player1.jump();
          }
 
+         if (p1Shoot && matchStarted && matchController.isRoundActive()) {
+             shoot(player1, weapon1);
+         }
+
          if (!vsBot) {
-             boolean p2Left = pressedKeys.contains(KeyCode.LEFT);
-             boolean p2Right = pressedKeys.contains(KeyCode.RIGHT);
+             boolean p2Left = pressedKeys.contains(p2Controls.getKey(PlayerAction.LEFT));
+             boolean p2Right = pressedKeys.contains(p2Controls.getKey(PlayerAction.RIGHT));
+             boolean p2Jump = pressedKeys.contains(p2Controls.getKey(PlayerAction.JUMP));
+             boolean p2Shoot = pressedKeys.contains(p2Controls.getKey(PlayerAction.SHOOT));
+
              if (p2Left && !p2Right) {
                  player2.moveLeft(delta);
              } else if (p2Right && !p2Left) {
@@ -381,8 +410,12 @@ public class GameApp extends GameApplication{
              } else {
                  player2.stopMoving();
              }
-             if (pressedKeys.contains(KeyCode.UP)) {
+             if (p2Jump) {
                  player2.jump();
+             }
+
+             if (p2Shoot && matchStarted && matchController.isRoundActive()) {
+                 shoot(player2, weapon2);
              }
 
          }
