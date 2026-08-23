@@ -15,7 +15,7 @@ public class BackgroundRenderer {
 
         for (int i = 0; i < HEIGHT; i++) {
             double progress = (double) i / HEIGHT;
-            color = top.interpolate(mid, t);
+            Color color;
             if (progress < 0.5) {
                 double t = progress / 0.5;
                 color = top.interpolate(mid, t);
@@ -74,7 +74,7 @@ public class BackgroundRenderer {
         }
 
         gc.setFill(Color.rgb(200, 200, 255, 0.05));
-        for (int i = 0; i < 30, i++){
+        for (int i = 0; i < 30l; i++){
             double px = (i * 47 + 13) % WIDTH;
             double py = (i * 31 + 7) % HEIGHT;
             gc.fillOval(px, py, 3, 3);

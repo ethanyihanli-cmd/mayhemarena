@@ -49,7 +49,7 @@ public class ExitMenu {
         Button menuBtn = new Button("Main Menu");
         menuBtn.setPrefWidth(200);
         menuBtn.setPrefHeight(40);
-        menuBtn.setStyle("-fx-font-size: 14px; -fx-background-colors: #4a4a8a; -fx-text-fill: white; " +
+        menuBtn.setStyle("-fx-font-size: 14px; -fx-background-color: #4a4a8a; -fx-text-fill: white; " +
                 "-fx-font-weight: bold; -fx-background-radius: 8;");
         menuBtn.setOnAction(e -> {
             stage.close();

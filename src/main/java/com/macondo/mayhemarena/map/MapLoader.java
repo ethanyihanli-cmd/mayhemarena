@@ -18,7 +18,7 @@ public class MapLoader {
         platforms.clear();
         currentMap = mapName;
 
-        platforms.add(new Platform(0, 600, 1280, 120));
+        platforms.add(new Platform(0, 600, 1280, 20));
 
         switch (mapName) {
             case "Sky Ruins":

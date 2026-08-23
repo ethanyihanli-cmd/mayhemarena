@@ -64,7 +64,7 @@ public class PerkSelection {
             btn.setOnAction(e -> {
                 p1Perk = perk;
                 stage.close();
-                PerkType[] result = new PerkSelection.showAndWait();
+                PerkType[] result = new PerkSelection().showAndWait();
                 if (result != null) {
                     p1Perk = result[0];
                     p2Perk = result[1];
@@ -87,7 +87,7 @@ public class PerkSelection {
             if (perk == p2Perk) {
                 btn.setStyle("-fx-background-color: #5a2a2a; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 12px;");
             } else {
-                btn.setStyle("-fx-background-color: #2a2a4a; -fx-text-fill: ;ightgray; -fx-font-size: 12px;");
+                btn.setStyle("-fx-background-color: #2a2a4a; -fx-text-fill: lightgray; -fx-font-size: 12px;");
             }
             btn.setOnAction(e -> {
                 p2Perk = perk;

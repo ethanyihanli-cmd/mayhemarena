@@ -4,15 +4,16 @@ import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.dsl.FXGL;
 import com.macondo.mayhemarena.entity.*;
+import com.macondo.mayhemarena.config.ControlScheme;
+import com.macondo.mayhemarena.config.PlayerAction;
 import com.macondo.mayhemarena.map.MapLoader;
 import com.macondo.mayhemarena.match.MatchController;
 import com.macondo.mayhemarena.model.GameTheme;
 import com.macondo.mayhemarena.model.PerkType;
-import com.macondo.mayhemarena.ui.BackgroundRenderer;
-import com.macondo.mayhemarena.ui.HUD;
-import com.macondo.mayhemarena.ui.MatchMessage;
+import com.macondo.mayhemarena.ui.*;
 import com.macondo.mayhemarena.weapon.Weapon;
 import com.macondo.mayhemarena.weapon.WeaponType;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
@@ -241,7 +242,7 @@ public class GameApp extends GameApplication{
                 weapon1.reload();
             }
             if (!vsBot && e.getCode() == p2Controls.getReloadKey() && matchStarted && matchController.isRoundActive()) {
-
+                weapon2.reload();
             }
 
             if (e.getCode() == KeyCode.SPACE && matchStarted && matchController.isRoundActive()) {
@@ -302,7 +303,7 @@ public class GameApp extends GameApplication{
 
          player1.update(delta, mapLoader.getPlatforms());
          if (vsBot) {
-             bot.update(delta, mapLoader.getPlatform(), player1.getX(), player1.getY());
+             bot.update(delta, mapLoader.getPlatforms(), player1.getX(), player1.getY());
              if (bot.isReadyToShoot() && botWeapon.canShoot()) {
                  double bx = bot.getX();
                  double by = bot.getY();

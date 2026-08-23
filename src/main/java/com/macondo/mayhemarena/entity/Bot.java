@@ -169,7 +169,7 @@ public class Bot {
             jumping = true;
         }
 
-        public void releaseJump() { jumping false; }
+        public void releaseJump() { jumping = false; }
 
         private void updateGun() {
             gun.setTranslateX(facing == 1 ? WIDTH - 4 : -14);
@@ -208,6 +208,4 @@ public class Bot {
         public int getFacing() { return facing; }
         public Entity getEntity() { return entity; }
         public boolean isReadyToShoot() { return state.equals("attack") && Math.random() < 0.3; }
-    }
-
 }
