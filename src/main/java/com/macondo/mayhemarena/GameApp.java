@@ -11,15 +11,16 @@ import com.macondo.mayhemarena.match.MatchController;
 import com.macondo.mayhemarena.model.GameTheme;
 import com.macondo.mayhemarena.model.PerkType;
 import com.macondo.mayhemarena.ui.*;
+import com.macondo.mayhemarena.util.SoundManager;
 import com.macondo.mayhemarena.weapon.Weapon;
 import com.macondo.mayhemarena.weapon.WeaponType;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 public class GameApp extends GameApplication{
+    private static final double PIT_DEATH_Y = 760;
 
     private Player player1;
     private Player player2;
@@ -43,6 +45,7 @@ public class GameApp extends GameApplication{
     private HUD hud;
     private MatchMessage matchMessage;
     private GameTheme theme;
+    private Canvas backgroundCanvas;
 
     private MatchController matchController;
     private boolean matchStarted;
@@ -90,6 +93,15 @@ public class GameApp extends GameApplication{
 
     @Override
     protected void initGame() {
+        Platform.runLater(() -> {
+            createBackgroundCanvas();
+            showMenusAndStartGame();
+        });
+    }
+
+    private void showMenusAndStartGame() {
+        SoundManager.getInstance().playBackgroundMusic("8-bit_-_crisis.mp3");
+
         MainMenu mainMenu = new MainMenu();
         boolean start = mainMenu.showAndWait();
         if (!start) {
@@ -173,16 +185,15 @@ public class GameApp extends GameApplication{
             }
 
             @Override
-            public void onRoundEnd(Player winner, int p1Wins, int p2Wins) {
-                String text = "PLAYER " + winner.getPlayerId() + " WINS ROUND!";
-                Color color = winner.getPlayerId() == 1 ? Color.LIME : Color.RED;
+            public void onRoundEnd(int winnerId, int p1Wins, int p2Wins) {
+                String text = "PLAYER " + winnerId + " WINS ROUND!";
+                Color color = winnerId == 1 ? Color.LIME : Color.RED;
                 matchMessage.show(text, color);
             }
 
             @Override
-            public void onMatchEnd(Player winner, int p1Wins, int p2Wins) {
-                String text = "PLAYER" + winner.getPlayerId() + " WINS THE MATCH!";
-                matchMessage.show(text, Color.GOLD);
+            public void onMatchEnd(int winnerId, int p1Wins, int p2Wins) {
+                showMatchSummary();
                 matchStarted = false;
             }
         });
@@ -201,14 +212,14 @@ public class GameApp extends GameApplication{
         if (vsBot) {
             bot.reset();
             bot.setPosition(spawns[2], spawns[3]);
-            botWeapon = new Weapon(WeaponType.PISTOL);
+            botWeapon = new Weapon(p2Weapon);
         } else {
             player2.reset();
             player2.setPosition(spawns[2], spawns[3]);
-            weapon2 = new Weapon(WeaponType.PISTOL);
+            weapon2 = new Weapon(p2Weapon);
         }
 
-        weapon1 = new Weapon(WeaponType.PISTOL);
+        weapon1 = new Weapon(p1Weapon);
         for (Bullet b : bullets) {
             b.deactivate();
         }
@@ -245,18 +256,6 @@ public class GameApp extends GameApplication{
                 weapon2.reload();
             }
 
-            if (e.getCode() == KeyCode.SPACE && matchStarted && matchController.isRoundActive()) {
-                shoot(player1, weapon1);
-            }
-            if (!vsBot && e.getCode() == KeyCode.M && matchStarted && matchController.isRoundActive()) {
-                shoot(player2, weapon2);
-            }
-            if (e.getCode() == KeyCode.R && matchStarted && matchController.isRoundActive()) {
-                weapon1.reload();
-            }
-            if (!vsBot && e.getCode() == KeyCode.COMMA && matchStarted && matchController.isRoundActive()) {
-                weapon2.reload();
-            }
         });
 
         scene.addEventFilter(KeyEvent.KEY_RELEASED, e -> {
@@ -265,9 +264,15 @@ public class GameApp extends GameApplication{
              if (e.getCode() == p1Controls.getKey(PlayerAction.JUMP)) {
                   player1.releaseJump();
              }
+             if (e.getCode() == p1Controls.getKey(PlayerAction.DOWN)) {
+                 player1.releaseDown();
+             }
 
              if (!vsBot && e.getCode() == p2Controls.getKey(PlayerAction.JUMP)) {
                  player2.releaseJump();
+             }
+             if (!vsBot && e.getCode() == p2Controls.getKey(PlayerAction.DOWN)) {
+                 player2.releaseDown();
              }
         });
     }
@@ -340,7 +345,7 @@ public class GameApp extends GameApplication{
 
              if (vsBot && b.hitsBot(bot)) {
                  bot.takeDamage(b.getDamage());
-                 bot.applyKnockback(b.getKnockback(), b.getX() > player2.getX() ? 1 : -1);
+                 bot.applyKnockback(b.getKnockback(), b.getX() > bot.getX() ? 1 : -1);
                  b.deactivate();
                  toRemove.add(b);
                  continue;
@@ -364,12 +369,21 @@ public class GameApp extends GameApplication{
          }
 
          if (matchController.isRoundActive()) {
-             if(player1.isKnockedOut()) {
-                 matchController.endRound(vsBot ? bot : player2);
+             if (player1.getY() > PIT_DEATH_Y) {
+                 player1.takeDamage(player1.getHealth());
+                 matchController.endRound(2);
+             } else if (vsBot && bot.getY() > PIT_DEATH_Y) {
+                 bot.takeDamage(bot.getHealth());
+                 matchController.endRound(1);
+             } else if (!vsBot && player2.getY() > PIT_DEATH_Y) {
+                 player2.takeDamage(player2.getHealth());
+                 matchController.endRound(1);
+             } else if(player1.isKnockedOut()) {
+                 matchController.endRound(2);
              } else if (vsBot && bot.isKnockedOut()) {
-                 matchController.endRound(player1);
+                 matchController.endRound(1);
              } else if (!vsBot && player2.isKnockedOut()) {
-                 matchController.endRound(player1);
+                 matchController.endRound(1);
              }
          }
 
@@ -380,6 +394,7 @@ public class GameApp extends GameApplication{
          boolean p1Left = pressedKeys.contains(p1Controls.getKey(PlayerAction.LEFT));
          boolean p1Right = pressedKeys.contains(p1Controls.getKey(PlayerAction.RIGHT));
          boolean p1Jump = pressedKeys.contains(p1Controls.getKey(PlayerAction.JUMP));
+         boolean p1Down = pressedKeys.contains(p1Controls.getKey(PlayerAction.DOWN));
          boolean p1Shoot = pressedKeys.contains(p1Controls.getKey(PlayerAction.SHOOT));
 
          if (p1Left && !p1Right) {
@@ -393,6 +408,9 @@ public class GameApp extends GameApplication{
          if (p1Jump) {
              player1.jump();
          }
+         if (p1Down) {
+             player1.down();
+         }
 
          if (p1Shoot && matchStarted && matchController.isRoundActive()) {
              shoot(player1, weapon1);
@@ -402,6 +420,7 @@ public class GameApp extends GameApplication{
              boolean p2Left = pressedKeys.contains(p2Controls.getKey(PlayerAction.LEFT));
              boolean p2Right = pressedKeys.contains(p2Controls.getKey(PlayerAction.RIGHT));
              boolean p2Jump = pressedKeys.contains(p2Controls.getKey(PlayerAction.JUMP));
+             boolean p2Down = pressedKeys.contains(p2Controls.getKey(PlayerAction.DOWN));
              boolean p2Shoot = pressedKeys.contains(p2Controls.getKey(PlayerAction.SHOOT));
 
              if (p2Left && !p2Right) {
@@ -414,6 +433,9 @@ public class GameApp extends GameApplication{
              if (p2Jump) {
                  player2.jump();
              }
+             if (p2Down) {
+                 player2.down();
+             }
 
              if (p2Shoot && matchStarted && matchController.isRoundActive()) {
                  shoot(player2, weapon2);
@@ -423,27 +445,53 @@ public class GameApp extends GameApplication{
 
      }
 
-     private void updateTitle() {
+    private void updateTitle() {
         String info = selectedMap + " | Round " + matchController.getRoundNumber() +
                 " | P1: " + matchController.getPlayer1Wins() + " - " + matchController.getPlayer2Wins() + " P2";
-        FXGL.getSettings().setTitle(info);
+        FXGL.getPrimaryStage().setTitle(info);
     }
 
     private void renderBackground() {
-        GraphicsContext gc = FXGL.getGameScene().getViewport().getGraphicsContext2D();
+        if (backgroundCanvas == null) {
+            return;
+        }
+        GraphicsContext gc = backgroundCanvas.getGraphicsContext2D();
         BackgroundRenderer.draw(gc, theme);
     }
 
-    private void restartApp() {
-        Platform.runLater(() -> {
+    private void createBackgroundCanvas() {
+        backgroundCanvas = new Canvas(1280, 720);
+        com.almasb.fxgl.entity.Entity background = new com.almasb.fxgl.entity.Entity();
+        background.getViewComponent().addChild(backgroundCanvas);
+        background.setPosition(0, 0);
+        FXGL.getGameWorld().addEntity(background);
+        renderBackground();
+    }
+
+    private void showMatchSummary() {
+        String text = "MATCH OVER";
+        String subText = "Player 1: " + matchController.getPlayer1Wins() +
+                         " - Player 2: " + matchController.getPlayer2Wins() +
+                         " | Rounds: " + matchController.getRoundNumber();
+        Color color = matchController.getPlayer1Wins() > matchController.getPlayer2Wins()
+                ? Color.LIME : Color.RED;
+
+        matchMessage.showMatchResult(text, subText, color);
+
+        new Thread(() -> {
             try {
-                GameApp newApp = new GameApp();
-                Stage newStage = new Stage();
-                newApp.start(newStage);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        });
+                Thread.sleep(5000);
+                Platform.runLater(() -> {
+                    if (matchMessage.isVisible()) {
+                        matchMessage.hide();
+                    }
+                });
+            } catch (InterruptedException ignored) {}
+        }).start();
+    }
+
+    private void restartApp() {
+        FXGL.getGameController().exit();
     }
 
     public static void main(String[] args) {

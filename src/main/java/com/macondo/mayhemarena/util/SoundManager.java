@@ -1,6 +1,8 @@
 package com.macondo.mayhemarena.util;
 
 import javafx.scene.media.AudioClip;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
 import java.net.URL;
 import java.util.HashMap;
@@ -9,6 +11,7 @@ import java.util.Map;
 public class SoundManager {
     private static SoundManager instance;
     private Map<String, AudioClip> sounds;
+    private MediaPlayer backgroundPlayer;
 
     private SoundManager() {
         sounds = new HashMap<>();
@@ -74,7 +77,25 @@ public class SoundManager {
             AudioClip clip = sounds.get("win");
             if (clip != null) {
                 clip.stop();
-                clip.play(0.7);
+            clip.play(0.7);
             }
+    }
+
+    public void playBackgroundMusic(String fileName) {
+        try {
+            URL url = getClass().getResource("/com/macondo/mayhemarena/sounds/" + fileName);
+            if (url == null) {
+                return;
+            }
+            if (backgroundPlayer != null) {
+                backgroundPlayer.stop();
+            }
+            backgroundPlayer = new MediaPlayer(new Media(url.toString()));
+            backgroundPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+            backgroundPlayer.setVolume(0.22);
+            backgroundPlayer.play();
+        } catch (Exception e) {
+            System.out.println("Background music could not be played");
+        }
     }
 }

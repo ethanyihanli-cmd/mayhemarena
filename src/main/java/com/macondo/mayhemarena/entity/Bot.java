@@ -2,6 +2,7 @@ package com.macondo.mayhemarena.entity;
 
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
+import com.macondo.mayhemarena.model.PerkType;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
@@ -21,6 +22,9 @@ public class Bot {
     private int health;
     private int maxHealth;
     private boolean knockedOut;
+    private PerkType perk;
+    private double speedMultiplier;
+    private double knockbackResist;
     private Entity entity;
     private Rectangle body;
     private Rectangle hat;
@@ -44,9 +48,11 @@ public class Bot {
         health = 100;
         maxHealth = 100;
         knockedOut = false;
+        perk = null;
+        speedMultiplier = 1.0;
+        knockbackResist = 1.0;
 
         createEntity();
-        FXGL.getGameWorld().addEntity(entity);
         }
 
         private void createEntity() {
@@ -127,7 +133,7 @@ public class Bot {
 
         private void makeDecision(double delta, double playerX, double playerY) {
             double distance = Math.abs(playerX - x);
-            double moveSpeed = 180 + difficulty * 40;
+            double moveSpeed = (180 + difficulty * 40) * speedMultiplier;
             double jumpChance = 0.02 + difficulty * 0.01;
 
             if (stateTimer > 0.5 + Math.random() * 0.5) {
@@ -171,11 +177,29 @@ public class Bot {
 
         public void releaseJump() { jumping = false; }
 
+        public void applyPerk(PerkType perkType) {
+            this.perk = perkType;
+            switch (perkType) {
+                case SPEED_BOOST:
+                    speedMultiplier = 1.2;
+                    break;
+                case KNOCKBACK_RESIST:
+                    knockbackResist = 0.6;
+                    break;
+                case HEALTH_BOOST:
+                    maxHealth = 130;
+                    health = maxHealth;
+                    break;
+                default:
+                    break;
+            }
+        }
+
         private void updateGun() {
             gun.setTranslateX(facing == 1 ? WIDTH - 4 : -14);
         }
 
-        private void takeDamage(int amount) {
+        public void takeDamage(int amount) {
             if (knockedOut) return;
             health -= amount;
             if (health <= 0) { health = 0; knockedOut = true; body.setFill(Color.DARKRED); }
@@ -183,11 +207,12 @@ public class Bot {
 
         public void applyKnockback(int force, int direction) {
             if (knockedOut) return;
-            double knock = grounded ? force * 0.3 : force * 0.5;
+            double resist = 1.0 - (1.0 - knockbackResist) * 0.6;
+            double knock = grounded ? force * 0.3 * resist : force * 0.5 * resist;
             dx += direction * knock;
             dy = -120;
             if (dx > 800) dx = 800;
-            if (dx < 800) dx = -800;
+            if (dx < -800) dx = -800;
         }
 
         public void reset() {

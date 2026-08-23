@@ -2,6 +2,7 @@ package com.macondo.mayhemarena.ui;
 
 import com.almasb.fxgl.dsl.FXGL;
 import com.almasb.fxgl.entity.Entity;
+import com.macondo.mayhemarena.entity.Bot;
 import com.macondo.mayhemarena.entity.Player;
 import com.macondo.mayhemarena.weapon.Weapon;
 import javafx.scene.paint.Color;
@@ -21,6 +22,9 @@ public class HUD {
     private Text p2AmmoText;
     private Text p1WeaponText;
     private Text p2WeaponText;
+
+    private double p1FlashTimer = 0;
+    private double p2FlashTimer = 0;
 
     public HUD() {
         p1HealthBar = new Rectangle(200, 20);

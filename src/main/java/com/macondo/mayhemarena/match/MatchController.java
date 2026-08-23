@@ -1,8 +1,5 @@
 package com.macondo.mayhemarena.match;
 
-import com.macondo.mayhemarena.entity.Player;
-import javafx.application.Platform;
-
 public class MatchController {
     private int player1Wins;
     private int player2Wins;
@@ -38,40 +35,35 @@ public class MatchController {
         }
     }
 
-    public void endRound(Player winner) {
+    public void endRound(int winnerId) {
         if (!roundActive) {
             return;
         }
 
         roundActive = false;
 
-        if (winner.getPlayerId() == 1) {
+        if (winnerId == 1) {
             player1Wins++;
         } else {
             player2Wins++;
         }
 
         if (listener != null) {
-            listener.onRoundEnd(winner, player1Wins, player2Wins);
+            listener.onRoundEnd(winnerId, player1Wins, player2Wins);
         }
 
         if (player1Wins >= 2 || player2Wins >= 2) {
-            endMatch(winner);
+            endMatch(winnerId);
         }
     }
 
-    public void endMatch(Player winner) {
+    public void endMatch(int winnerId) {
         matchActive = false;
         roundActive = false;
 
         if (listener != null) {
-            listener.onMatchEnd(winner, player1Wins, player2Wins);
+            listener.onMatchEnd(winnerId, player1Wins, player2Wins);
         }
-    }
-
-    public void resetPlayers(Player p1, Player p2) {
-        p1.reset();
-        p2.reset();
     }
 
     public void setListener(MatchStateListener listener) {
@@ -86,8 +78,8 @@ public class MatchController {
 
     public interface MatchStateListener {
         void onRoundStart(int roundNumber);
-        void onRoundEnd(Player winner, int p1Wins, int p2Wins);
-        void onMatchEnd(Player winner, int p1Wins, int p2Wins);
+        void onRoundEnd(int winnerId, int p1Wins, int p2Wins);
+        void onMatchEnd(int winnerId, int p1Wins, int p2Wins);
     }
 
 

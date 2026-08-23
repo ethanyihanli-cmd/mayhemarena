@@ -1,6 +1,8 @@
 package com.macondo.mayhemarena.weapon;
 
 import com.macondo.mayhemarena.entity.Bullet;
+import com.macondo.mayhemarena.util.SoundManager;
+import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +32,11 @@ public class Weapon {
         }
 
         if (type == WeaponType.KNIFE) {
-            shootCooldown = 0.5;
+            bullets.add(new Bullet(x, y, facing, type.getDamage(), type.getKnockback(), type.getRange(), shooterId,
+                    0, type.getBulletSpeed(), type.getBulletWidth(), type.getBulletHeight(),
+                    type.getBulletLife(), Color.web("#fca5a5")));
+            shootCooldown = type.getCooldown();
+            SoundManager.getInstance().playShoot();
             return bullets;
         }
 
@@ -42,11 +48,11 @@ public class Weapon {
 
         for (int i = 0; i < pelletCount; i++) {
             double spread = (type == WeaponType.SHOTGUN)
-                    ? (i - pelletCount / 2.0) * 0.15
+                    ? (i - (pelletCount - 1) / 2.0) * 24
                     : 0;
 
             if (type == WeaponType.SNIPER) {
-                spread += (Math.random() - 0.5) * 0.05;
+                spread += (Math.random() - 0.5) * 8;
             }
 
             int adjustedKnockback = type.getKnockback();
@@ -56,15 +62,15 @@ public class Weapon {
             }
 
             Bullet bullet = new Bullet(x, y, facing, type.getDamage(),
-                    adjustedKnockback, type.getRange(), shooterId, spread);
+                    adjustedKnockback, type.getRange(), shooterId, spread,
+                    type.getBulletSpeed(), type.getBulletWidth(), type.getBulletHeight(),
+                    type.getBulletLife(), bulletColor());
             bullets.add(bullet);
         }
 
         magazine--;
-        shootCooldown = (type == WeaponType.SHOTGUN) ? 0.5 :
-                (type == WeaponType.RIFLE) ? 0.12 :
-                (type == WeaponType.SNIPER) ? 1.0 :
-                (type == WeaponType.PISTOL) ? 0.35 : 0;
+        shootCooldown = type.getCooldown();
+        SoundManager.getInstance().playShoot();
 
         return bullets;
     }
@@ -121,6 +127,16 @@ public class Weapon {
     public double getReloadProgress() {
         if (!isReloading) return 1.0;
         return 1.0 - (reloadTimer / type.getReloadTime());
+    }
+
+    private Color bulletColor() {
+        return switch (type) {
+            case PISTOL -> Color.web("#fadb5f");
+            case RIFLE -> Color.web("#feca57");
+            case SHOTGUN -> Color.web("#ff9f43");
+            case SNIPER -> Color.web("#bfdbfe");
+            case KNIFE -> Color.web("#fca5a5");
+        };
     }
 
 }

@@ -29,8 +29,11 @@ public class Player {
     private PerkType perk;
     private int jumpCount;
     private int maxJumps;
+    private int midAirJumpsLeft;
     private double speedMultiplier;
     private double knockbackResist;
+    private boolean pressingDown;
+    private double dropPlatformTimer;
 
     private Entity entity;
     private Rectangle body;
@@ -51,8 +54,11 @@ public class Player {
         perk = null;
         maxJumps = 1;
         jumpCount = 0;
+        midAirJumpsLeft = 0;
         speedMultiplier = 1.0;
         knockbackResist = 1.0;
+        pressingDown = false;
+        dropPlatformTimer = 0;
 
         health = 100;
         maxHealth = 100;
@@ -135,33 +141,62 @@ public class Player {
     }
 
      public void moveLeft(double delta) {
-        dx = -320;
+        dx = -320 * speedMultiplier;
         facing = -1;
         updateGun();
      }
 
      public void moveRight(double delta) {
-        dx = 320;
+        dx = 320 * speedMultiplier;
         facing = 1;
         updateGun();
      }
 
      public void stopMoving() {
-        dx = 0;
+        dx *= grounded ? 0.35 : 0.92;
+        if (Math.abs(dx) < 18) {
+            dx = 0;
+        }
      }
 
      public void jump() {
-        if (!grounded || jumping) {
+        if (jumping) {
             return;
         }
-        dy = -760;
-        grounded = false;
-        jumping = true;
+
+        if (grounded) {
+            dy = -760;
+            grounded = false;
+            jumping = true;
+        } else if (midAirJumpsLeft > 0) {
+            dy = -720;
+            midAirJumpsLeft--;
+            jumping = true;
+        }
      }
 
      public void releaseJump() {
         jumping = false;
     }
+
+     public void down() {
+        if (pressingDown) {
+            return;
+        }
+        if (grounded) {
+            dropPlatformTimer = 0.22;
+            y += 10;
+            dy = 220;
+            grounded = false;
+        } else {
+            dy = Math.max(dy, 980);
+        }
+        pressingDown = true;
+     }
+
+     public void releaseDown() {
+        pressingDown = false;
+     }
 
      private void updateGun() {
          if (facing == 1) {
@@ -207,6 +242,9 @@ public class Player {
         dx = 0;
         dy = 0;
         jumpCount = 0;
+        midAirJumpsLeft = Math.max(0, maxJumps - 1);
+        pressingDown = false;
+        dropPlatformTimer = 0;
 
         if (playerId == 1) {
             body.setFill(Color.GREEN);
@@ -222,6 +260,12 @@ public class Player {
         if (knockedOut) {
             return;
         }
+
+         if (dropPlatformTimer > 0) {
+             dropPlatformTimer -= delta;
+         }
+
+         double oldY = y;
 
          dy += 1900 * delta;
          if (dy > 1200) {
@@ -242,18 +286,22 @@ public class Player {
          grounded = false;
 
          for (Platform plat : platforms) {
-             double px = plat.getX();
-             double py = plat.getY();
-             double pw = plat.getWidth();
-             double ph = plat.getHeight();
+             if (dropPlatformTimer > 0 && plat.canDrop()) {
+                 continue;
+             }
 
-             if (x + WIDTH > px && x < px + pw) {
-                 if (dy >= 0 && y + HEIGHT >= py && y + HEIGHT <= py + ph + 10) {
-                     y = py - HEIGHT;
+             boolean alignX = x + WIDTH - 6 > plat.getLeft() && x + 6 < plat.getRight();
+             boolean wasHigher = oldY + HEIGHT <= plat.getTop() + 4;
+             boolean nowLower = y + HEIGHT >= plat.getTop();
+             double collisionBuffer = Math.max(14, dy * delta + 8);
+             boolean hitTop = nowLower && oldY + HEIGHT <= plat.getTop() + collisionBuffer;
+
+             if (alignX && wasHigher && hitTop && dy >= 0) {
+                     y = plat.getTop() - HEIGHT;
                      dy = 0;
                      grounded = true;
                      jumping = false;
-                 }
+                     midAirJumpsLeft = Math.max(0, maxJumps - 1);
              }
          }
 

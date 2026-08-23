@@ -6,7 +6,6 @@ module com.macondo.mayhemarena {
     requires java.desktop;
 
     opens com.macondo.mayhemarena to javafx.fxml;
-    opens com.macondo.mayhemarena.game to com.almasb.fxgl.all;
     opens com.macondo.mayhemarena.model to javafx.fxml;
     opens com.macondo.mayhemarena.ui to javafx.fxml;
 

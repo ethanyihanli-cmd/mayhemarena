@@ -34,7 +34,7 @@ public class ControlScheme {
      }
 
      public static ControlScheme playerTwoDefault() {
-         return new ControlScheme(KeyCode.LEFT, KeyCode.RIGHT, KeyCode.UP, KeyCode.DOWN, KeyCode.M);
+         return new ControlScheme(KeyCode.LEFT, KeyCode.RIGHT, KeyCode.UP, KeyCode.DOWN, KeyCode.M, KeyCode.COMMA);
      }
 
      public KeyCode getKey(PlayerAction action) {
