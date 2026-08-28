@@ -58,3 +58,6 @@ Default controls:
 12. Add maps, perks, menus, UI, sounds, and polish after the core game works.
 
 In the Java version, I split the game into classes for players, bots, bullets, weapons, maps, menus, HUD, and match control. The HTML version keeps everything in one file so it is easier to open and understand.
+
+
+<img width="1600" height="930" alt="屏幕截图 2026-08-23 170606" src="https://github.com/user-attachments/assets/689bb7c6-4760-402d-ba26-1e7ca8ea5502" />
